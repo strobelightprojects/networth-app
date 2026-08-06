@@ -266,16 +266,16 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm mb-6">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm mb-6 transition-colors">
       
       {/* Header controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
         <div>
-          <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-            <Building className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <Building className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
             Assets & Liabilities Ledger
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Detailed ledger of all financial accounts, investment holdings, debts, and properties.
           </p>
         </div>
@@ -284,11 +284,11 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
         <div className="flex flex-wrap items-center gap-2.5 print:hidden">
           
           {/* Type Filter Buttons */}
-          <div className="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => { setTypeFilter('active'); setCategoryFilter('all'); }}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                typeFilter === 'active' ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                typeFilter === 'active' ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Active ({activeItems.length})
@@ -296,7 +296,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
             <button
               onClick={() => setTypeFilter('all')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                typeFilter === 'all' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                typeFilter === 'all' ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               All Records ({items.length})
@@ -304,7 +304,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
             <button
               onClick={() => setTypeFilter('asset')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                typeFilter === 'asset' ? 'bg-emerald-500 text-slate-950 shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                typeFilter === 'asset' ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Assets ({items.filter(i => i.type === 'asset').length})
@@ -312,7 +312,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
             <button
               onClick={() => setTypeFilter('liability')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                typeFilter === 'liability' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                typeFilter === 'liability' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Debts ({items.filter(i => i.type === 'liability').length})
@@ -320,7 +320,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
             <button
               onClick={() => setTypeFilter('insurance')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                typeFilter === 'insurance' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
+                typeFilter === 'insurance' ? 'bg-purple-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Insurance ({items.filter(i => i.type === 'insurance').length})
@@ -329,7 +329,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
               <button
                 onClick={() => setTypeFilter('excluded')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                  typeFilter === 'excluded' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-amber-400 hover:text-amber-300'
+                  typeFilter === 'excluded' ? 'bg-amber-500 text-slate-950 font-bold shadow-sm' : 'text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300'
                 }`}
                 title="View accounts removed/excluded from net worth calculation"
               >
@@ -347,7 +347,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
               placeholder="Search accounts..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
             />
           </div>
 
@@ -355,12 +355,12 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-300 font-medium focus:outline-none focus:border-emerald-500 cursor-pointer"
+            className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-300 font-medium focus:outline-none focus:border-emerald-500 cursor-pointer"
             title="Filter by Category"
           >
-            <option value="all" className="bg-slate-900 text-slate-300">All Categories</option>
+            <option value="all" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-300">All Categories</option>
             {availableCategories.map((cat) => (
-              <option key={cat} value={cat} className="bg-slate-900 text-white">
+              <option key={cat} value={cat} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                 {cat}
               </option>
             ))}
@@ -369,10 +369,10 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
           {/* Breakdown Toggle Button */}
           <button
             onClick={() => setShowNetWorthBreakdown(!showNetWorthBreakdown)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
               showNetWorthBreakdown 
-                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-                : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700'
+                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600 dark:text-emerald-400' 
+                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
           >
             <Calculator className="w-4 h-4" />

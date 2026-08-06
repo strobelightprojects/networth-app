@@ -134,16 +134,15 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
   }, [portfolio.history, timeframe, activeItems, currentTotalAssets, currentTotalLiabilities, currentNetWorth]);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm mb-6">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm mb-6 transition-colors">
       
       {/* Header controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-white tracking-tight">Historical Net Worth</h2>
-            
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Historical Net Worth</h2>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Track asset growth and debt amortization over time.
           </p>
         </div>
@@ -152,23 +151,23 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
         <div className="flex flex-wrap items-center gap-2">
           
           {/* Chart mode button */}
-          <div className="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setChartMode('networth')}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                 chartMode === 'networth'
-                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Net Worth
             </button>
             <button
               onClick={() => setChartMode('stacked')}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                 chartMode === 'stacked'
                   ? 'bg-blue-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Assets vs Debt
@@ -176,15 +175,15 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
           </div>
 
           {/* Timeframe filter */}
-          <div className="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             {(['6M', '1Y', '3Y', 'ALL'] as const).map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                   timeframe === tf
-                    ? 'bg-slate-700 text-emerald-400 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-bold shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {tf}
@@ -205,10 +204,10 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                   <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-              <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} />
+              <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickLine={false} />
               <YAxis
-                stroke="#94A3B8"
+                stroke="#64748B"
                 fontSize={11}
                 tickLine={false}
                 tickFormatter={(val) => formatCurrency(val, currency, true)}
@@ -218,21 +217,21 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl text-xs">
-                        <div className="font-semibold text-slate-300 mb-1.5 flex items-center justify-between gap-3">
+                      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-xl text-xs text-slate-900 dark:text-white">
+                        <div className="font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between gap-3">
                           <span>{label}</span>
                           {data.isProjection && (
-                            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px]">
+                            <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px]">
                               Forecast
                             </span>
                           )}
                         </div>
                         <div className="space-y-1">
-                          <div className="text-emerald-400 font-bold text-sm">
+                          <div className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                             Net Worth: {formatCurrency(data.netWorth, currency)}
                           </div>
-                          <div className="text-blue-400">Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
-                          <div className="text-rose-400">Total Debt: {formatCurrency(data.totalLiabilities, currency)}</div>
+                          <div className="text-blue-600 dark:text-blue-400">Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
+                          <div className="text-rose-600 dark:text-rose-400">Total Debt: {formatCurrency(data.totalLiabilities, currency)}</div>
                         </div>
                       </div>
                     );
@@ -261,10 +260,10 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                   <stop offset="95%" stopColor="#F43F5E" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.5} />
-              <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#94A3B8" opacity={0.2} />
+              <XAxis dataKey="date" stroke="#64748B" fontSize={11} tickLine={false} />
               <YAxis
-                stroke="#94A3B8"
+                stroke="#64748B"
                 fontSize={11}
                 tickLine={false}
                 tickFormatter={(val) => formatCurrency(val, currency, true)}
@@ -274,14 +273,14 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl text-xs">
-                        <div className="font-semibold text-slate-300 mb-1">
+                      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl shadow-xl text-xs text-slate-900 dark:text-white">
+                        <div className="font-semibold text-slate-700 dark:text-slate-300 mb-1">
                           {label}
                         </div>
                         <div className="space-y-1">
-                          <div className="text-blue-400 font-semibold">Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
-                          <div className="text-rose-400 font-semibold">Total Liabilities: {formatCurrency(data.totalLiabilities, currency)}</div>
-                          <div className="text-emerald-400 font-bold border-t border-slate-800 pt-1 mt-1">
+                          <div className="text-blue-600 dark:text-blue-400 font-semibold">Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
+                          <div className="text-rose-600 dark:text-rose-400 font-semibold">Total Liabilities: {formatCurrency(data.totalLiabilities, currency)}</div>
+                          <div className="text-emerald-600 dark:text-emerald-400 font-bold border-t border-slate-200 dark:border-slate-800 pt-1 mt-1">
                             Net Worth: {formatCurrency(data.netWorth, currency)}
                           </div>
                         </div>

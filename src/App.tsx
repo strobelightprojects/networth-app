@@ -119,6 +119,26 @@ export default function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState<boolean>(false);
 
+  // Dark / Light Theme State
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const savedTheme = localStorage.getItem('networth_theme');
+    if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme;
+    return 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('networth_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // Helper to upsert history points chronologically
   const upsertHistoryPoint = (
     history: HistoricalSnapshot[],
@@ -472,7 +492,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950 transition-colors">
       
       {/* Top Header */}
       <Header
@@ -493,6 +513,8 @@ export default function App() {
         currency={currency}
         onChangeCurrency={(c) => setCurrency(c)}
         currentUser={currentUser}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Content Dashboard */}
@@ -606,6 +628,8 @@ export default function App() {
         onClose={() => setIsSettingsModalOpen(false)}
         onExportCSV={handleExportCSV}
         onPrint={() => window.print()}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       <AuthModal
