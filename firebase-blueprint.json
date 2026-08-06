@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "User": {
+      "path": "/users/{userId}",
+      "fields": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "lastActiveAt": { "type": "string" },
+        "activePortfolioId": { "type": "string" },
+        "isAnonymous": { "type": "boolean" }
+      },
+      "access": {
+        "read": "request.auth.uid == userId",
+        "write": "request.auth.uid == userId"
+      }
+    },
+    "Portfolio": {
+      "path": "/users/{userId}/portfolios/{portfolioId}",
+      "fields": {
+        "name": { "type": "string" },
+        "currency": { "type": "string" },
+        "items": { "type": "array" },
+        "history": { "type": "array" },
+        "milestones": { "type": "array" },
+        "targetAllocation": { "type": "map" },
+        "updatedAt": { "type": "string" },
+        "lastActiveAt": { "type": "string" }
+      },
+      "access": {
+        "read": "request.auth.uid == userId",
+        "write": "request.auth.uid == userId"
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Rate & payload size protection helpers
+    function isValidUserData() {
+      return request.resource.data.keys().hasAny(['email', 'displayName', 'lastActiveAt', 'createdAt'])
+        && request.resource.data.size() < 10;
+    }
+
+    function isValidPortfolioData() {
+      return request.resource.data.keys().hasAll(['id', 'name', 'currency', 'items', 'history'])
+        && request.resource.data.items.size() <= 500
+        && request.resource.data.history.size() <= 1000;
+    }
+
+    match /users/{userId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUserData();
+
+      match /portfolios/{portfolioId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidPortfolioData();
+      }
+    }
+  }
+}

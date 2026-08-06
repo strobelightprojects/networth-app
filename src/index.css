@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@media print {
+  @page {
+    margin: 1cm;
+    size: auto;
+  }
+
+  body {
+    background-color: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force background colors to white and text to dark for a clean PDF report */
+  .bg-slate-950, .bg-slate-900, .bg-slate-800, .bg-slate-800\/50, .bg-slate-900\/50 {
+    background-color: white !important;
+    color: #111827 !important;
+    border-color: #e5e7eb !important;
+  }
+  
+  .border-slate-800, .border-slate-700 {
+    border-color: #e5e7eb !important;
+  }
+
+  .text-slate-100, .text-slate-200, .text-slate-300, .text-slate-400, .text-white {
+    color: #374151 !important;
+  }
+
+  /* Explicit heading colors */
+  h1, h2, h3, h4, h5, h6 {
+    color: #111827 !important;
+  }
+
+  /* Prevent chart elements from splitting across pages */
+  .recharts-wrapper {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Ensure panels don't break across pages */
+  .print-panel {
+    page-break-inside: avoid !important;
+  }
+  
+  /* Hide shadows for cleaner print */
+  .shadow-xl, .shadow-2xl, .shadow-sm, .shadow-md, .shadow-lg {
+    box-shadow: none !important;
+  }
+  
+  /* Disable scrolling and max heights so everything prints */
+  .overflow-y-auto, .overflow-x-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  
+  /* Buttons and interactive elements are hidden via tailwind print:hidden, but let's hide any leftover unstyled buttons */
+  button.print-hidden-btn {
+    display: none !important;
+  }
+}
+

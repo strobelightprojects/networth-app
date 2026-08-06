@@ -1,0 +1,6 @@
+{
+  "name": "Net Worth Tracker",
+  "description": "Transform Google Sheets, Excel files, and financial statements into real-time net worth dashboards with AI column mapping, dynamic visualizations, asset allocation, and scenario modeling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
