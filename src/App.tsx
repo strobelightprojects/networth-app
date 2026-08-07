@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { SAMPLE_PORTFOLIOS } from './data/samplePortfolios';
+import React, { useState, useEffect, useRef } from 'react';
+import { SAMPLE_PORTFOLIOS, DEFAULT_PORTFOLIO } from './data/samplePortfolios';
 import { PortfolioData, FinancialItem, CurrencyCode, ParsedSheetData, ImportOptions, ImportMode, HistoricalSnapshot, BatchFileSnapshot } from './types';
 import { 
   Header, 
@@ -19,6 +19,23 @@ import {
 import { auth, subscribeUserPortfolios, saveUserPortfolioToFirestore, deleteUserPortfolioFromFirestore, syncAllPortfoliosToFirestore } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
+const isExamplePortfolio = (p: PortfolioData): boolean => {
+  if (!p) return true;
+  const exampleIds = ['balanced-growth', 'fire-investor', 'real-estate-investor', 'sample-portfolio'];
+  if (exampleIds.includes(p.id)) return true;
+  const nameLower = (p.name || '').toLowerCase();
+  if (
+    nameLower.includes('balanced growth') ||
+    nameLower.includes('fire investor') ||
+    nameLower.includes('real estate investor') ||
+    nameLower.includes('sample') ||
+    nameLower.includes('example')
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export default function App() {
   // Helper to sanitize portfolio data and ensure clean object structure
   const sanitizePortfolio = (p: PortfolioData): PortfolioData => {
@@ -36,10 +53,7 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Remove old example portfolios if saved in user's localStorage
-          const filtered = parsed.filter(
-            (p) => !['balanced-growth', 'fire-investor', 'real-estate-investor'].includes(p.id)
-          );
+          const filtered = parsed.filter((p) => !isExamplePortfolio(p));
           if (filtered.length > 0) {
             return filtered.map(sanitizePortfolio);
           }
@@ -48,7 +62,8 @@ export default function App() {
     } catch (e) {
       console.error('Failed loading portfolios from localStorage', e);
     }
-    return SAMPLE_PORTFOLIOS.map(sanitizePortfolio);
+    const cleanSamples = SAMPLE_PORTFOLIOS.filter((p) => !isExamplePortfolio(p)).map(sanitizePortfolio);
+    return cleanSamples.length > 0 ? cleanSamples : [DEFAULT_PORTFOLIO];
   });
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>(() => {
@@ -62,35 +77,90 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
+  const isFirestoreUpdateRef = useRef<boolean>(false);
+
   // Listen to Auth state changes and subscribe to Firestore portfolios
   useEffect(() => {
+    let unsubFirestore: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      if (unsubFirestore) {
+        unsubFirestore();
+        unsubFirestore = null;
+      }
+
       if (user) {
-        const unsubFirestore = subscribeUserPortfolios(user.uid, (firestorePortfolios) => {
-          if (firestorePortfolios && firestorePortfolios.length > 0) {
-            setPortfolios(firestorePortfolios.map(sanitizePortfolio));
+        let isInitialLoad = true;
+
+        unsubFirestore = subscribeUserPortfolios(user.uid, (firestorePortfolios) => {
+          // Identify and purge any example files from Firestore
+          const realPortfolios = (firestorePortfolios || []).filter((p) => !isExamplePortfolio(p));
+
+          (firestorePortfolios || []).forEach((p) => {
+            if (isExamplePortfolio(p)) {
+              deleteUserPortfolioFromFirestore(user.uid, p.id);
+            }
+          });
+
+          if (realPortfolios.length > 0) {
+            isFirestoreUpdateRef.current = true;
+            setPortfolios(realPortfolios.map(sanitizePortfolio));
+          } else if (isInitialLoad) {
+            isInitialLoad = false;
+            // First time login and user has 0 cloud portfolios
+            const cleanLocal = portfolios.filter((p) => !isExamplePortfolio(p));
+            const toSync = cleanLocal.length > 0 ? cleanLocal : [DEFAULT_PORTFOLIO];
+            syncAllPortfoliosToFirestore(user.uid, toSync);
+            isFirestoreUpdateRef.current = true;
+            setPortfolios(toSync);
           } else {
-            // Initial sync if user has no cloud portfolios yet
-            syncAllPortfoliosToFirestore(user.uid, portfolios);
+            // User deleted all portfolios in cloud
+            const defaultCleanPortfolio: PortfolioData = {
+              id: `portfolio-${Date.now()}`,
+              name: 'My Wealth Portfolio',
+              currency,
+              items: [],
+              history: [
+                {
+                  date: new Date().toISOString().slice(0, 7),
+                  totalAssets: 0,
+                  totalLiabilities: 0,
+                  netWorth: 0,
+                },
+              ],
+            };
+            saveUserPortfolioToFirestore(user.uid, defaultCleanPortfolio);
+            isFirestoreUpdateRef.current = true;
+            setPortfolios([defaultCleanPortfolio]);
           }
+          isInitialLoad = false;
         });
-        return () => unsubFirestore();
       }
     });
-    return () => unsubscribe();
+
+    return () => {
+      if (unsubFirestore) unsubFirestore();
+      unsubscribe();
+    };
   }, []);
 
   // Sync to localStorage and Firestore whenever portfolios change
   useEffect(() => {
+    const cleanPortfolios = portfolios.filter((p) => !isExamplePortfolio(p));
     try {
-      localStorage.setItem('networth_pulse_portfolios', JSON.stringify(portfolios));
+      localStorage.setItem('networth_pulse_portfolios', JSON.stringify(cleanPortfolios));
     } catch (e) {
       console.error('Failed saving portfolios to localStorage', e);
     }
 
+    if (isFirestoreUpdateRef.current) {
+      isFirestoreUpdateRef.current = false;
+      return;
+    }
+
     if (currentUser) {
-      portfolios.forEach((p) => {
+      cleanPortfolios.forEach((p) => {
         saveUserPortfolioToFirestore(currentUser.uid, p);
       });
     }
@@ -100,7 +170,8 @@ export default function App() {
     if (!currentUser) return;
     setIsSyncing(true);
     try {
-      await syncAllPortfoliosToFirestore(currentUser.uid, portfolios);
+      const cleanPortfolios = portfolios.filter((p) => !isExamplePortfolio(p));
+      await syncAllPortfoliosToFirestore(currentUser.uid, cleanPortfolios.length > 0 ? cleanPortfolios : [DEFAULT_PORTFOLIO]);
     } catch (err) {
       console.error('Cloud sync error:', err);
     } finally {
@@ -158,12 +229,12 @@ export default function App() {
   };
 
   // File / Portfolio Management Handlers
-  const handleDeletePortfolio = (id: string) => {
+  const handleDeletePortfolio = async (id: string) => {
     if (currentUser) {
-      deleteUserPortfolioFromFirestore(currentUser.uid, id);
+      await deleteUserPortfolioFromFirestore(currentUser.uid, id);
     }
     setPortfolios((prev) => {
-      const remaining = prev.filter((p) => p.id !== id);
+      const remaining = prev.filter((p) => p.id !== id && !isExamplePortfolio(p));
       if (remaining.length === 0) {
         // If last portfolio deleted, create default empty portfolio
         const defaultPortfolio: PortfolioData = {
@@ -180,6 +251,9 @@ export default function App() {
             },
           ],
         };
+        if (currentUser) {
+          saveUserPortfolioToFirestore(currentUser.uid, defaultPortfolio);
+        }
         setSelectedPortfolioId(defaultPortfolio.id);
         return [defaultPortfolio];
       }
@@ -215,15 +289,6 @@ export default function App() {
     setPortfolios((prev) => [...prev, newP]);
     setSelectedPortfolioId(newP.id);
   };
-
-  // Save portfolios to localStorage whenever updated
-  useEffect(() => {
-    try {
-      localStorage.setItem('networth_pulse_portfolios', JSON.stringify(portfolios));
-    } catch (e) {
-      console.error('Failed saving to localStorage', e);
-    }
-  }, [portfolios]);
 
   // Active Portfolio Object
   const currentPortfolio = portfolios.find((p) => p.id === selectedPortfolioId) || portfolios[0];
