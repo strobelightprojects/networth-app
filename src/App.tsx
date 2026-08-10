@@ -587,11 +587,19 @@ export default function App() {
   };
 
   const handlePrint = (startDate?: string, endDate?: string) => {
+    setIsSettingsModalOpen(false);
+    setIsManageFilesOpen(false);
+    setIsImportModalOpen(false);
+    setIsColumnMapperOpen(false);
+    setIsGuideModalOpen(false);
+    setIsAddItemModalOpen(false);
+    setIsAuthModalOpen(false);
+    setIsPrivacyModalOpen(false);
     setReportStartDate(startDate || '');
     setReportEndDate(endDate || '');
     setTimeout(() => {
       window.print();
-    }, 500); // Allow time for React to re-render with filtered data
+    }, 150);
   };
 
   return (
@@ -621,14 +629,32 @@ export default function App() {
       {/* Main Content Dashboard */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
-        {/* Print-only Header */}
-        <div className="hidden print:block mb-8">
-          <h1 className="text-3xl font-bold mb-2">Net Worth Report: {filteredPortfolio.name}</h1>
-          <p className="text-sm text-slate-500">Generated on {new Date().toLocaleDateString()}</p>
+        {/* Print-only Executive Report Header */}
+        <div className="hidden print:block mb-8 pb-6 border-b-2 border-slate-900">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-widest text-emerald-700 mb-1">
+                Net Worth & Personal Financial Audit Report
+              </div>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                {filteredPortfolio.name}
+              </h1>
+              <p className="text-xs text-slate-600 mt-1">
+                Consolidated Financial Statement • Account Items: {filteredPortfolio.items.length}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs font-semibold text-slate-700">Statement Date</div>
+              <div className="text-sm font-bold text-slate-900">
+                {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+              <div className="text-xs text-slate-600 mt-1">Base Currency: {currency}</div>
+            </div>
+          </div>
           {(reportStartDate || reportEndDate) && (
-            <p className="text-xs text-slate-500 mt-1">
-              Date Filter: {reportStartDate || 'Any'} to {reportEndDate || 'Present'}
-            </p>
+            <div className="mt-3 p-2 bg-slate-100 rounded border border-slate-300 text-xs text-slate-700 font-medium">
+              Filtered Date Range: {reportStartDate || 'Beginning'} to {reportEndDate || 'Present'}
+            </div>
           )}
         </div>
 

@@ -103,7 +103,15 @@ export async function fetchLiveExchangeRates(base: string = 'USD'): Promise<{
 
   // Attempt live network fetch
   try {
-    const res = await fetch(`/api/exchange-rates?base=${encodeURIComponent(base)}`);
+    
+    let fetchUrl = `/api/exchange-rates?base=${encodeURIComponent(base)}`;
+    if (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null') {
+      fetchUrl = window.location.origin + fetchUrl;
+    } else if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+      fetchUrl = 'http://localhost' + fetchUrl;
+    }
+    const res = await fetch(fetchUrl);
+  
     if (res.ok) {
       const data = await res.json();
       if (data && data.rates) {

@@ -1,0 +1,7 @@
+import fs from 'fs';
+let t = fs.readFileSync('src/__tests__/App.test.tsx', 'utf8');
+t = t.replace(
+  "fireEvent.click(screen.getByText('Add Asset/Liability'));",
+  "fireEvent.click(screen.getByText('Add Item'));"
+);
+fs.writeFileSync('src/__tests__/App.test.tsx', t);

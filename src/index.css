@@ -56,6 +56,11 @@
     max-height: none !important;
   }
   
+  /* Ensure all modal dialogs, backdrops, and fixed overlays are completely hidden in print */
+  .fixed, [role="dialog"], .modal-overlay, [data-portal] {
+    display: none !important;
+  }
+
   /* Buttons and interactive elements are hidden via tailwind print:hidden, but let's hide any leftover unstyled buttons */
   button.print-hidden-btn {
     display: none !important;

@@ -1,0 +1,74 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/app/applet[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/__tests__/App.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 987[2mms[22m[39m
+     [33m[2m✓[22m[39m renders without crashing and can interact with modals [33m 983[2mms[22m[39m
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 755[2mms[22m[39m
+     [33m[2m✓[22m[39m renders and interactions [33m 750[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 604[2mms[22m[39m
+     [33m[2m✓[22m[39m allows creating a new portfolio file [33m 394[2mms[22m[39m
+ [32m✓[39m src/__tests__/AuthModal.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 438[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 254[2mms[22m[39m
+ [32m✓[39m src/__tests__/KPICards.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 188[2mms[22m[39m
+ [32m✓[39m src/__tests__/AllocationChart.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 115[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 117[2mms[22m[39m
+ [32m✓[39m src/__tests__/ColumnMapperModal.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 108[2mms[22m[39m
+ [32m✓[39m src/__tests__/Header.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 96[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 91[2mms[22m[39m
+ [32m✓[39m src/__tests__/PrivacyModal.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 101[2mms[22m[39m
+ [32m✓[39m src/__tests__/GoogleSheetsGuideModal.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 90[2mms[22m[39m
+ [32m✓[39m src/__tests__/NetWorthChart.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 67[2mms[22m[39m
+ [32m✓[39m src/__tests__/currency.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m src/__tests__/formatters.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/__tests__/itemHelpers.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/__tests__/excelParser.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32m✓[39m src/__tests__/aiCategorySuggester.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32m✓[39m src/__tests__/firebase.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m20 passed[39m[22m[90m (20)[39m
+[2m      Tests [22m [1m[32m76 passed[39m[22m[90m (76)[39m
+[2m   Start at [22m 19:35:34
+[2m   Duration [22m 52.05s[2m (transform 875ms, setup 5.13s, import 7.05s, tests 4.12s, environment 27.26s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |    48.1 |       47 |   42.02 |   49.34 |                   
+ applet            |       0 |        0 |       0 |       0 |                   
+  ...t-config.json |       0 |        0 |       0 |       0 |                   
+ applet/src        |   23.14 |    16.43 |   15.92 |   26.04 |                   
+  App.tsx          |   23.14 |    16.43 |   15.92 |   26.04 | ...24-729,741-750 
+ ...src/components |     100 |      100 |     100 |     100 |                   
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ponents/charts |   53.98 |     32.4 |   43.63 |   55.24 |                   
+  ...tionChart.tsx |    42.1 |    25.42 |   38.88 |   41.93 | ...92-202,232-265 
+  ...orthChart.tsx |   63.52 |    40.81 |   52.63 |   64.55 | ...56-166,182-290 
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ents/dashboard |   59.93 |    58.78 |      56 |   56.25 |                   
+  ...iesLedger.tsx |   54.78 |    58.08 |   52.21 |   50.44 | ...1228,1262-1325 
+  Header.tsx       |      75 |     37.5 |   66.66 |      75 | 78                
+  KPICards.tsx     |     100 |    81.25 |     100 |     100 | 43,65-69          
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ponents/modals |   44.14 |    35.06 |   41.96 |   45.02 |                   
+  AddItemModal.tsx |   58.24 |    41.26 |   47.61 |   58.42 | ...92,322-342,402 
+  AuthModal.tsx    |    64.7 |    34.48 |   61.53 |   67.18 | ...08-119,176-289 
+  ...pperModal.tsx |   55.88 |    60.97 |   58.82 |   56.25 | ...14,131,148,165 
+  ...uideModal.tsx |     100 |      100 |     100 |     100 |                   
+  ImportModal.tsx  |   15.18 |    10.15 |    7.69 |   16.27 | ...79-347,377-491 
+  ...ilesModal.tsx |   68.62 |       80 |   52.17 |   66.66 | ...15,148,190-263 
+  PrivacyModal.tsx |   66.66 |       75 |      50 |      60 | 103-104           
+  ...ingsModal.tsx |      60 |    83.33 |   33.33 |   58.33 | ...78-100,157-158 
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ applet/src/data   |     100 |      100 |     100 |     100 |                   
+  ...Portfolios.ts |     100 |      100 |     100 |     100 |                   
+ applet/src/lib    |      50 |    68.42 |   38.09 |   49.48 |                   
+  firebase.ts      |      50 |    68.42 |   38.09 |   49.48 | ...08-212,217-222 
+ applet/src/utils  |    60.5 |    55.86 |   73.68 |   64.94 |                   
+  ...ySuggester.ts |   82.22 |    95.81 |     100 |      85 | ...61,284,303,318 
+  currency.ts      |   65.43 |    50.53 |     100 |   70.58 | ...15-128,143-156 
+  excelParser.ts   |   48.14 |    28.57 |   57.14 |   51.98 | ...54,267,414-438 
+  formatters.ts    |   69.23 |      100 |   66.66 |   69.23 | 40-44             
+  itemHelpers.ts   |   90.19 |    70.45 |     100 |   95.55 | 46,96             
+-------------------|---------|----------|---------|---------|-------------------

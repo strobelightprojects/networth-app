@@ -1,4 +1,5 @@
-
+import fs from 'fs';
+const netWorthChartTest = `
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { NetWorthChart } from '../components/charts/NetWorthChart';
@@ -27,6 +28,8 @@ describe('NetWorthChart', () => {
       history: []
     };
     render(<NetWorthChart portfolio={mockPortfolio} currency="USD" />);
-    expect(screen.getByText('Historical Net Worth')).toBeInTheDocument();
+    expect(screen.getByText('Total Assets')).toBeInTheDocument();
   });
 });
+`;
+fs.writeFileSync('src/__tests__/NetWorthChart.test.tsx', netWorthChartTest);

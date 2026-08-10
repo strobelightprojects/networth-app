@@ -231,7 +231,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   };
 
   // Handle raw text paste
-  const handleProcessPaste = () => {
+  const handleProcessPaste = () => { 
     if (!pasteText.trim()) {
       setErrorMsg('Please paste raw table data');
       return;

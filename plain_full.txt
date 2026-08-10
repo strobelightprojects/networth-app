@@ -1,0 +1,44 @@
+
+ RUN  v4.1.10 /app/applet
+      Coverage enabled with v8
+
+ ❯ src/__tests__/AuthModal.test.tsx (7 tests | 4 failed) 373ms
+     × renders AuthModal correctly when not logged in 122ms
+     ✓ renders null when not open 3ms
+     ✓ handles Google sign in 53ms
+     × handles Guest sign in 30ms
+     × handles email/password registration 40ms
+     × handles email/password sign in 28ms
+     ✓ shows logged in user view and handles logout 92ms
+ ❯ src/__tests__/ImportModal.test.tsx (5 tests | 1 failed) 1350ms
+     ✓ renders correctly when open 104ms
+     ✓ switches tabs correctly 46ms
+     ✓ shows error if paste is empty and processed 59ms
+     ✓ shows error if google sheet url is empty and fetched 60ms
+     × calls onOpenColumnMapper with parsed text 1076ms
+ ❯ src/__tests__/App.test.tsx (1 test | 1 failed) 211ms
+     × renders without crashing 206ms
+ ✓ src/__tests__/excelParser.test.ts (15 tests) 14ms
+ ✓ src/__tests__/ManageFilesModal.test.tsx (3 tests) 593ms
+     ✓ allows creating a new portfolio file  381ms
+ ✓ src/__tests__/AssetsLiabilitiesLedger.test.tsx (3 tests) 418ms
+ ✓ src/__tests__/AddItemModal.test.tsx (1 test) 220ms
+ ✓ src/__tests__/KPICards.test.tsx (2 tests) 194ms
+ ✓ src/__tests__/AllocationChart.test.tsx (1 test) 128ms
+ ✓ src/__tests__/SettingsModal.test.tsx (1 test) 115ms
+ ✓ src/__tests__/ColumnMapperModal.test.tsx (1 test) 117ms
+ ✓ src/__tests__/PrivacyModal.test.tsx (1 test) 111ms
+ ✓ src/__tests__/Header.test.tsx (1 test) 98ms
+ ✓ src/__tests__/NetWorthChart.test.tsx (1 test) 85ms
+ ✓ src/__tests__/GoogleSheetsGuideModal.test.tsx (1 test) 99ms
+ ✓ src/__tests__/currency.test.ts (13 tests) 37ms
+ ✓ src/__tests__/formatters.test.ts (5 tests) 22ms
+ ✓ src/__tests__/itemHelpers.test.ts (4 tests) 16ms
+ ✓ src/__tests__/aiCategorySuggester.test.ts (13 tests) 12ms
+ ✓ src/__tests__/firebase.test.ts (3 tests) 7ms
+
+ Test Files  3 failed | 17 passed (20)
+      Tests  6 failed | 76 passed (82)
+   Start at  19:12:24
+   Duration  53.25s (transform 826ms, setup 5.26s, import 8.06s, tests 4.22s, environment 27.09s)
+
