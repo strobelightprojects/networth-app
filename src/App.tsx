@@ -14,7 +14,8 @@ import {
   ManageFilesModal, 
   SettingsModal, 
   AuthModal, 
-  PrivacyModal 
+  PrivacyModal,
+  ReportPreviewModal
 } from './components';
 import { auth, subscribeUserPortfolios, saveUserPortfolioToFirestore, deleteUserPortfolioFromFirestore, syncAllPortfoliosToFirestore } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -189,6 +190,7 @@ export default function App() {
   const [isManageFilesOpen, setIsManageFilesOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState<boolean>(false);
+  const [isReportPreviewOpen, setIsReportPreviewOpen] = useState<boolean>(false);
 
   // Global Date Filter for Reports
   const [reportStartDate, setReportStartDate] = useState<string>('');
@@ -595,6 +597,7 @@ export default function App() {
     setIsAddItemModalOpen(false);
     setIsAuthModalOpen(false);
     setIsPrivacyModalOpen(false);
+    setIsReportPreviewOpen(false);
     setReportStartDate(startDate || '');
     setReportEndDate(endDate || '');
     setTimeout(() => {
@@ -614,7 +617,6 @@ export default function App() {
         onOpenManageFilesModal={() => setIsManageFilesOpen(true)}
         onDeleteCurrentPortfolio={() => handleDeletePortfolio(currentPortfolio.id)}
         onOpenImportModal={() => setIsImportModalOpen(true)}
-        onOpenGuideModal={() => setIsGuideModalOpen(true)}
         onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
@@ -732,11 +734,6 @@ export default function App() {
         onConfirmImport={handleImportItems}
       />
 
-      <GoogleSheetsGuideModal
-        isOpen={isGuideModalOpen}
-        onClose={() => setIsGuideModalOpen(false)}
-      />
-
       <AddItemModal
         isOpen={isAddItemModalOpen}
         onClose={() => setIsAddItemModalOpen(false)}
@@ -759,6 +756,15 @@ export default function App() {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         onExportCSV={handleExportCSV}
+        onPrint={handlePrint}
+        onPreviewReport={() => setIsReportPreviewOpen(true)}
+      />
+
+      <ReportPreviewModal
+        isOpen={isReportPreviewOpen}
+        onClose={() => setIsReportPreviewOpen(false)}
+        portfolio={filteredPortfolio}
+        currency={currency}
         onPrint={handlePrint}
       />
 

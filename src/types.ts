@@ -45,6 +45,7 @@ export interface FinancialItem {
   lastUpdated: string; // ISO date string
   tickerSymbol?: string; // Optional stock/crypto ticker
   interestRate?: number; // Optional for liabilities or high yield cash
+  isLiquid?: boolean; // Optional flag for liquid asset classification
   isExcluded?: boolean; // If true, excluded from Net Worth calculations
 }
 
@@ -79,6 +80,7 @@ export interface ColumnMapping {
   typeCol?: string;
   categoryCol?: string;
   currencyCol?: string;
+  dateCol?: string;
 }
 
 export type ImportMode = 'replace' | 'snapshot_only' | 'append' | 'new_portfolio';

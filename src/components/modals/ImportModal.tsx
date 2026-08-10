@@ -7,13 +7,23 @@ import {
   Table, 
   X, 
   AlertCircle, 
-  CheckCircle, 
+  CheckCircle2, 
   Loader2, 
-  FileText 
+  FileText,
+  Calendar, 
+  History, 
+  RefreshCw, 
+  PlusCircle, 
+  FolderPlus, 
+  Files,
+  Columns,
+  Check,
+  Eye,
+  ArrowLeft
 } from 'lucide-react';
-import { parseExcelFile, parseCSVText, parseGoogleSheetUrl, convertRowsToItems, extractDateFromFilename } from '../../utils/excelParser';
+import { parseExcelFile, parseCSVText, parseGoogleSheetUrl, convertRowsToItems, extractDateFromFilename, detectGlobalDateFromSheet, parseDateString } from '../../utils/excelParser';
 import { FinancialItem, ParsedSheetData, ColumnMapping, ImportOptions, ImportMode, BatchFileSnapshot } from '../../types';
-import { Calendar, History, RefreshCw, PlusCircle, FolderPlus, Files } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 import { auth } from '../../lib/firebase';
 
 interface ImportModalProps {
@@ -22,6 +32,14 @@ interface ImportModalProps {
   onImportItems: (items: FinancialItem[], options: ImportOptions) => void;
   onImportBatch?: (batch: BatchFileSnapshot[], options: ImportOptions) => void;
   onOpenColumnMapper: (parsedData: ParsedSheetData, options: ImportOptions) => void;
+}
+
+interface PreviewState {
+  items: FinancialItem[];
+  batchSnapshots?: BatchFileSnapshot[];
+  options: ImportOptions;
+  sourceName: string;
+  parsedSheet?: ParsedSheetData;
 }
 
 export const ImportModal: React.FC<ImportModalProps> = ({
@@ -42,6 +60,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
+  // Data Preview State
+  const [previewData, setPreviewData] = useState<PreviewState | null>(null);
+
   React.useEffect(() => {
     if (isOpen) {
       setErrorMsg(null);
@@ -52,6 +73,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       setPortfolioTitle('');
       setImportDate(new Date().toISOString().split('T')[0]);
       setImportMode('replace');
+      setPreviewData(null);
     }
   }, [isOpen]);
 
@@ -96,28 +118,28 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         const file = files[i];
         setStatusMsg(`Parsing file ${i + 1} of ${files.length}: ${file.name}...`);
         const parsedData = await parseSingleFile(file);
-        const fileDate = extractDateFromFilename(file.name, importDate);
+        const detectedSheetDate = detectGlobalDateFromSheet(parsedData.rows, file.name) || extractDateFromFilename(file.name, importDate);
 
         let items: FinancialItem[] = [];
         if (parsedData.suggestedMapping?.nameCol && parsedData.suggestedMapping?.valueCol) {
-          items = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping);
+          items = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping, undefined, undefined, detectedSheetDate);
         }
 
         if (items.length === 0 && parsedData.headers.length >= 2) {
           items = convertRowsToItems(parsedData.rows, {
             nameCol: parsedData.headers[0],
             valueCol: parsedData.headers[1],
-          });
+          }, undefined, undefined, detectedSheetDate);
         }
 
-        const taggedItems = items.map((item) => ({ ...item, lastUpdated: fileDate }));
-        const totalAssets = taggedItems.filter((it) => it.type === 'asset').reduce((sum, it) => sum + it.value, 0);
-        const totalLiabilities = taggedItems.filter((it) => it.type === 'liability').reduce((sum, it) => sum + it.value, 0);
+        const primaryDate = items[0]?.lastUpdated || detectedSheetDate;
+        const totalAssets = items.filter((it) => it.type === 'asset').reduce((sum, it) => sum + it.value, 0);
+        const totalLiabilities = items.filter((it) => it.type === 'liability').reduce((sum, it) => sum + it.value, 0);
 
         batchSnapshots.push({
           fileName: file.name,
-          importDate: fileDate,
-          items: taggedItems,
+          importDate: primaryDate,
+          items,
           totalAssets,
           totalLiabilities,
           netWorth: totalAssets - totalLiabilities,
@@ -125,20 +147,20 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       }
 
       if (batchSnapshots.length > 0) {
+        batchSnapshots.sort((a, b) => a.importDate.localeCompare(b.importDate));
+        const allItems = batchSnapshots.flatMap((s) => s.items);
         const importOptions: ImportOptions = {
           mode: importMode,
-          importDate,
+          importDate: batchSnapshots[batchSnapshots.length - 1].importDate || importDate,
           portfolioName: portfolioTitle.trim() || `${files.length}-File Portfolio Batch`,
         };
 
-        if (onImportBatch) {
-          onImportBatch(batchSnapshots, importOptions);
-        } else {
-          batchSnapshots.sort((a, b) => a.importDate.localeCompare(b.importDate));
-          const latest = batchSnapshots[batchSnapshots.length - 1];
-          onImportItems(latest.items, importOptions);
-        }
-        onClose();
+        setPreviewData({
+          items: allItems,
+          batchSnapshots,
+          options: importOptions,
+          sourceName: `${files.length} Spreadsheet Files`,
+        });
       } else {
         setErrorMsg('Could not parse items from the selected files.');
       }
@@ -180,6 +202,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       } else {
         // Process multiple sheets
         let combinedItems: FinancialItem[] = [];
+        let primaryBatchDate = importDate;
         
         for (let i = 0; i < urls.length; i++) {
           setStatusMsg(`Fetching Google Sheet ${i + 1} of ${urls.length}...`);
@@ -194,34 +217,40 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           }
           const csvText = await res.text();
           const parsedData = parseCSVText(csvText, `GoogleSheet_${i+1}.csv`);
+          const detectedSheetDate = detectGlobalDateFromSheet(parsedData.rows, `GoogleSheet_${i+1}.csv`) || importDate;
           
           let items: FinancialItem[] = [];
           if (parsedData.suggestedMapping?.nameCol && parsedData.suggestedMapping?.valueCol) {
-            items = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping);
+            items = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping, undefined, undefined, detectedSheetDate);
           }
           if (items.length === 0 && parsedData.headers.length >= 2) {
             items = convertRowsToItems(parsedData.rows, {
               nameCol: parsedData.headers[0],
               valueCol: parsedData.headers[1],
-            });
+            }, undefined, undefined, detectedSheetDate);
           }
           
           if (items.length === 0) {
              throw new Error(`Could not automatically map columns for sheet ${i+1}. Please format with "Name" and "Value" headers.`);
           }
           
-          const taggedItems = items.map(item => ({ ...item, lastUpdated: importDate }));
-          combinedItems = [...combinedItems, ...taggedItems];
+          if (i === 0 && items[0]?.lastUpdated) {
+            primaryBatchDate = items[0].lastUpdated;
+          }
+          combinedItems = [...combinedItems, ...items];
         }
         
         const importOptions: ImportOptions = {
           mode: importMode,
-          importDate,
+          importDate: primaryBatchDate,
           portfolioName: portfolioTitle.trim() || `${urls.length}-Sheet Portfolio`,
         };
         
-        onImportItems(combinedItems, importOptions);
-        onClose();
+        setPreviewData({
+          items: combinedItems,
+          options: importOptions,
+          sourceName: `${urls.length} Google Sheets`,
+        });
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Error fetching Google Sheet.');
@@ -251,23 +280,34 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
   // Helper after sheet is parsed locally
   const handleParsedSheet = (parsedData: ParsedSheetData) => {
-    const importOptions: ImportOptions = {
-      mode: importMode,
-      importDate,
-      portfolioName: portfolioTitle.trim() || parsedData.fileName.replace(/\.[^/.]+$/, ''),
-    };
+    const detectedSheetDate = detectGlobalDateFromSheet(parsedData.rows, parsedData.fileName) || importDate;
 
     // Check if mapping looks valid
     if (parsedData.suggestedMapping?.nameCol && parsedData.suggestedMapping?.valueCol) {
-      const converted = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping);
+      const converted = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping, undefined, undefined, detectedSheetDate);
       if (converted.length > 0) {
-        // Tag items with importDate
-        const taggedItems = converted.map((item) => ({ ...item, lastUpdated: importDate }));
-        onImportItems(taggedItems, importOptions);
-        onClose();
+        const primaryDate = converted[0]?.lastUpdated || detectedSheetDate;
+        const importOptions: ImportOptions = {
+          mode: importMode,
+          importDate: primaryDate,
+          portfolioName: portfolioTitle.trim() || parsedData.fileName.replace(/\.[^/.]+$/, ''),
+        };
+
+        setPreviewData({
+          items: converted,
+          options: importOptions,
+          sourceName: parsedData.fileName,
+          parsedSheet: parsedData,
+        });
         return;
       }
     }
+
+    const importOptions: ImportOptions = {
+      mode: importMode,
+      importDate: detectedSheetDate,
+      portfolioName: portfolioTitle.trim() || parsedData.fileName.replace(/\.[^/.]+$/, ''),
+    };
 
     // Open Manual Column Mapper if auto conversion missed columns
     onOpenColumnMapper(parsedData, importOptions);
@@ -320,24 +360,35 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
       const result = await res.json();
       if (result.items && Array.isArray(result.items) && result.items.length > 0) {
-        const items: FinancialItem[] = result.items.map((i: any, idx: number) => ({
-          id: `ai-${Date.now()}-${idx}`,
-          name: i.name || 'Account Item',
-          category: i.category || 'Stocks & ETFs',
-          type: i.type === 'insurance' ? 'insurance' : i.type === 'liability' ? 'liability' : 'asset',
-          value: Math.abs(Number(i.value) || 0),
-          isLiquid: i.isLiquid ?? (i.type === 'asset'),
-          lastUpdated: importDate,
-        }));
+        const aiGlobalDate = result.date ? parseDateString(result.date) : null;
+        const effectiveDate = aiGlobalDate || importDate;
+
+        const items: FinancialItem[] = result.items.map((i: any, idx: number) => {
+          const itemDate = i.date ? parseDateString(i.date) : effectiveDate;
+          return {
+            id: `ai-${Date.now()}-${idx}`,
+            name: i.name || 'Account Item',
+            category: i.category || 'Stocks & ETFs',
+            type: i.type === 'insurance' ? 'insurance' : i.type === 'liability' ? 'liability' : 'asset',
+            value: Math.abs(Number(i.value) || 0),
+            isLiquid: i.isLiquid ?? (i.type === 'asset'),
+            lastUpdated: itemDate,
+          };
+        });
+
+        const primaryDate = items[0]?.lastUpdated || effectiveDate;
 
         const importOptions: ImportOptions = {
           mode: importMode,
-          importDate,
+          importDate: primaryDate,
           portfolioName: portfolioTitle.trim() || 'AI Imported Portfolio',
         };
 
-        onImportItems(items, importOptions);
-        onClose();
+        setPreviewData({
+          items,
+          options: importOptions,
+          sourceName: 'AI Smart Parser Output',
+        });
       } else {
         throw new Error('AI could not identify valid financial items in this sheet.');
       }
@@ -348,19 +399,51 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     }
   };
 
+  const handleConfirmPreviewImport = () => {
+    if (previewData) {
+      if (previewData.batchSnapshots && previewData.batchSnapshots.length > 1 && onImportBatch) {
+        onImportBatch(previewData.batchSnapshots, previewData.options);
+      } else {
+        onImportItems(previewData.items, previewData.options);
+      }
+      onClose();
+    }
+  };
+
+  const handleOpenMapperFromPreview = () => {
+    if (previewData?.parsedSheet) {
+      onOpenColumnMapper(previewData.parsedSheet, previewData.options);
+      onClose();
+    }
+  };
+
+  // Preview Metrics
+  const previewTotalAssets = previewData
+    ? previewData.items.filter((i) => i.type === 'asset').reduce((s, i) => s + i.value, 0)
+    : 0;
+  const previewTotalLiabilities = previewData
+    ? previewData.items.filter((i) => i.type === 'liability').reduce((s, i) => s + i.value, 0)
+    : 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden flex flex-col">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <FileSpreadsheet className="w-5 h-5" />
+              {previewData ? <Eye className="w-5 h-5" /> : <FileSpreadsheet className="w-5 h-5" />}
             </div>
             <div>
-              <h3 className="text-base font-bold text-white tracking-tight">Import Financial Data</h3>
-              <p className="text-xs text-slate-400">Connect Google Sheets, Excel files, or CSV bank exports.</p>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                {previewData ? 'Data Import Preview' : 'Import Financial Data'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {previewData
+                  ? `Review parsed items from ${previewData.sourceName} before importing.`
+                  : 'Connect Google Sheets, Excel files, or CSV bank exports.'}
+              </p>
             </div>
           </div>
           <button
@@ -371,157 +454,306 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 bg-slate-950/50 p-1 text-xs font-semibold text-slate-400">
-          <button
-            onClick={() => { setActiveTab('file'); setErrorMsg(null); }}
-            className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
-              activeTab === 'file' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
-            }`}
-          >
-            <Upload className="w-4 h-4" />
-            Excel / CSV File
-          </button>
-          <button
-            onClick={() => { setActiveTab('googlesheets'); setErrorMsg(null); }}
-            className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
-              activeTab === 'googlesheets' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
-            }`}
-          >
-            <Link className="w-4 h-4" />
-            Google Sheets Link
-          </button>
-          <button
-            onClick={() => { setActiveTab('paste'); setErrorMsg(null); }}
-            className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
-              activeTab === 'paste' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            Copy-Paste Text
-          </button>
-        </div>
+        {/* DATA PREVIEW SCREEN */}
+        {previewData ? (
+          <div className="p-6 space-y-5 overflow-y-auto">
+            {/* Source & Mode Banner */}
+            <div className="p-4 bg-slate-950/80 rounded-xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-semibold">Source File / Link:</span>
+                <span className="text-emerald-400 font-bold truncate max-w-[250px]">{previewData.sourceName}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400 font-semibold">Import Date:</span>
+                <span className="text-slate-200 font-mono">{previewData.options.importDate}</span>
+              </div>
+            </div>
 
-        {/* Content Body */}
-        <div className="p-6 space-y-4">
-
-          {/* TAB 1: FILE UPLOAD */}
-          {activeTab === 'file' && (
-            <div className="space-y-4">
-              <label className="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer bg-slate-950/40 hover:bg-slate-950/80 transition-all text-center">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3">
-                  <Files className="w-6 h-6" />
+            {/* Batch Files Breakdown (if multiple files uploaded) */}
+            {previewData.batchSnapshots && previewData.batchSnapshots.length > 1 && (
+              <div className="space-y-2 bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Files className="w-4 h-4 text-emerald-400" />
+                    Multiple Statements / Files Detected ({previewData.batchSnapshots.length} Files)
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-normal">Dates auto-extracted per file</span>
                 </div>
-                <span className="text-sm font-bold text-white mb-1">
-                  Click to select one or multiple Excel / CSV files
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
+                  {previewData.batchSnapshots.map((snap, idx) => (
+                    <div key={idx} className="p-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs flex items-center justify-between">
+                      <div className="truncate pr-2">
+                        <div className="font-semibold text-white truncate">{snap.fileName}</div>
+                        <div className="text-[10px] text-slate-400">
+                          Date: <span className="text-emerald-400 font-mono font-medium">{snap.importDate}</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-slate-200">{snap.items.length} items</div>
+                        <div className="text-[10px] text-slate-400">{formatCurrency(snap.netWorth, 'USD')}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Metric Summary Cards */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <div className="text-[10px] font-bold uppercase text-emerald-400">Total Assets</div>
+                <div className="text-base font-extrabold text-white mt-0.5">
+                  {formatCurrency(previewTotalAssets, 'USD')}
+                </div>
+              </div>
+
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+                <div className="text-[10px] font-bold uppercase text-rose-400">Total Liabilities</div>
+                <div className="text-base font-extrabold text-white mt-0.5">
+                  {formatCurrency(previewTotalLiabilities, 'USD')}
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                <div className="text-[10px] font-bold uppercase text-blue-400">Net Worth Impact</div>
+                <div className="text-base font-extrabold text-white mt-0.5">
+                  {formatCurrency(previewTotalAssets - previewTotalLiabilities, 'USD')}
+                </div>
+              </div>
+            </div>
+
+            {/* Items Table Preview */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                  <Table className="w-3.5 h-3.5 text-emerald-400" />
+                  Parsed Financial Accounts ({previewData.items.length})
                 </span>
-                <span className="text-xs text-slate-400 max-w-sm">
-                  Select multiple historical statements (e.g. <span className="text-emerald-400 font-mono">jan_2024.csv</span>, <span className="text-emerald-400 font-mono">jan_2025.csv</span>, <span className="text-emerald-400 font-mono">jan_2026.csv</span>) to build a portfolio with historical trend automatically!
-                </span>
-                <input
-                  type="file"
-                  multiple
-                  accept=".xlsx,.xls,.csv,.tsv,.txt"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-            </div>
-          )}
-
-          {/* TAB 2: GOOGLE SHEETS LINK */}
-          {activeTab === 'googlesheets' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Paste Google Sheets Shareable Link(s)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="https://docs.google.com/spreadsheets/d/.../edit&#10;(Optional: paste multiple links separated by commas or new lines)"
-                  value={gsUrl}
-                  onChange={(e) => setGsUrl(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
-                <p className="text-[11px] text-slate-400 mt-1.5 leading-normal">
-                  Make sure access is set to <span className="text-emerald-400 font-semibold">"Anyone with the link can view"</span> in Google Sheets sharing settings.
-                </p>
+                {previewData.parsedSheet && (
+                  <button
+                    onClick={handleOpenMapperFromPreview}
+                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold"
+                  >
+                    <Columns className="w-3.5 h-3.5" />
+                    Customize Column Mapping
+                  </button>
+                )}
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={handleFetchGoogleSheet}
-                  disabled={isLoading}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link className="w-4 h-4" />}
-                  Fetch & Parse Google Sheet
-                </button>
+              <div className="overflow-x-auto rounded-xl border border-slate-800 max-h-56 bg-slate-950">
+                <table className="w-full text-left text-[11px]">
+                  <thead>
+                    <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold">
+                      <th className="p-2.5">Account Name</th>
+                      <th className="p-2.5">Category</th>
+                      <th className="p-2.5">Date</th>
+                      <th className="p-2.5">Type</th>
+                      <th className="p-2.5 text-right">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {previewData.items.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-900/50">
+                        <td className="p-2.5 text-slate-200 font-medium">{item.name}</td>
+                        <td className="p-2.5 text-slate-400">{item.category}</td>
+                        <td className="p-2.5 text-slate-400 font-mono text-[10px]">{item.lastUpdated || '-'}</td>
+                        <td className="p-2.5">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            item.type === 'asset'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : item.type === 'liability'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          }`}>
+                            {item.type}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-right font-extrabold text-white">
+                          {formatCurrency(item.value, 'USD')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-          )}
 
-          {/* TAB 3: COPY-PASTE RAW TEXT */}
-          {activeTab === 'paste' && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Paste Table Data from Spreadsheet or Bank Statement
-                </label>
-                <textarea
-                  rows={5}
-                  placeholder={`Account Name\tCategory\tValue\nVanguard VTI\tStocks\t150000\nChase Mortgage\tLiability\t320000`}
-                  value={pasteText}
-                  onChange={(e) => setPasteText(e.target.value)}
-                  className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
+            {/* Footer Action Buttons */}
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setPreviewData(null)}
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back / Re-upload
+              </button>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={handleProcessPaste}
-                  disabled={isLoading}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Table className="w-4 h-4" />}
-                  Parse Table Content
-                </button>
-
-                <button
-                  onClick={() => handleAIParse(pasteText)}
-                  disabled={isLoading}
-                  className="py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5"
-                  title="Use Gemini AI to analyze unstructured sheet text"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  AI Auto-Mapper
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleConfirmPreviewImport}
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 transition-all cursor-pointer"
+              >
+                <Check className="w-4 h-4" />
+                Confirm & Import {previewData.items.length} Items
+              </button>
             </div>
-          )}
-
-          {/* Status / Error Message */}
-          {errorMsg && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+          </div>
+        ) : (
+          <>
+            {/* Tab Navigation */}
+            <div className="flex border-b border-slate-800 bg-slate-950/50 p-1 text-xs font-semibold text-slate-400">
+              <button
+                onClick={() => { setActiveTab('file'); setErrorMsg(null); }}
+                className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
+                  activeTab === 'file' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
+                }`}
+              >
+                <Upload className="w-4 h-4" />
+                Excel / CSV File
+              </button>
+              <button
+                onClick={() => { setActiveTab('googlesheets'); setErrorMsg(null); }}
+                className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
+                  activeTab === 'googlesheets' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
+                }`}
+              >
+                <Link className="w-4 h-4" />
+                Google Sheets Link
+              </button>
+              <button
+                onClick={() => { setActiveTab('paste'); setErrorMsg(null); }}
+                className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
+                  activeTab === 'paste' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                Copy-Paste Text
+              </button>
             </div>
-          )}
 
-          {isLoading && (
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-              <span>{statusMsg || 'Processing...'}</span>
+            {/* Content Body */}
+            <div className="p-6 space-y-4">
+
+              {/* TAB 1: FILE UPLOAD */}
+              {activeTab === 'file' && (
+                <div className="space-y-4">
+                  <label className="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer bg-slate-950/40 hover:bg-slate-950/80 transition-all text-center">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-3">
+                      <Files className="w-6 h-6" />
+                    </div>
+                    <span className="text-sm font-bold text-white mb-1">
+                      Click to select one or multiple Excel / CSV files
+                    </span>
+                    <span className="text-xs text-slate-400 max-w-sm">
+                      Select multiple historical statements (e.g. <span className="text-emerald-400 font-mono">jan_2024.csv</span>, <span className="text-emerald-400 font-mono">jan_2025.csv</span>, <span className="text-emerald-400 font-mono">jan_2026.csv</span>) to build a portfolio with historical trend automatically!
+                    </span>
+                    <input
+                      type="file"
+                      multiple
+                      accept=".xlsx,.xls,.csv,.tsv,.txt"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              )}
+
+              {/* TAB 2: GOOGLE SHEETS LINK */}
+              {activeTab === 'googlesheets' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      Paste Google Sheets Shareable Link(s)
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="https://docs.google.com/spreadsheets/d/.../edit&#10;(Optional: paste multiple links separated by commas or new lines)"
+                      value={gsUrl}
+                      onChange={(e) => setGsUrl(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1.5 leading-normal">
+                      Make sure access is set to <span className="text-emerald-400 font-semibold">"Anyone with the link can view"</span> in Google Sheets sharing settings.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleFetchGoogleSheet}
+                      disabled={isLoading}
+                      className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link className="w-4 h-4" />}
+                      Fetch & Parse Google Sheet
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: COPY-PASTE RAW TEXT */}
+              {activeTab === 'paste' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      Paste Table Data from Spreadsheet or Bank Statement
+                    </label>
+                    <textarea
+                      rows={5}
+                      placeholder={`Account Name\tCategory\tValue\nVanguard VTI\tStocks\t150000\nChase Mortgage\tLiability\t320000`}
+                      value={pasteText}
+                      onChange={(e) => setPasteText(e.target.value)}
+                      className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleProcessPaste}
+                      disabled={isLoading}
+                      className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Table className="w-4 h-4" />}
+                      Parse Table Content
+                    </button>
+
+                    <button
+                      onClick={() => handleAIParse(pasteText)}
+                      disabled={isLoading}
+                      className="py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      title="Use Gemini AI to analyze unstructured sheet text"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      AI Auto-Mapper
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Status / Error Message */}
+              {errorMsg && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {isLoading && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                  <span>{statusMsg || 'Processing...'}</span>
+                </div>
+              )}
+
             </div>
-          )}
 
-        </div>
-
-        {/* Footer info */}
-        <div className="p-4 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-          <span>Data is processed locally in your browser session.</span>
-          <span className="text-emerald-400 font-semibold">Gemini AI Auto-Mapping Enabled</span>
-        </div>
+            {/* Footer info */}
+            <div className="p-4 bg-slate-950 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Data is processed locally in your browser session.</span>
+              <span className="text-emerald-400 font-semibold">Gemini AI Auto-Mapping Enabled</span>
+            </div>
+          </>
+        )}
 
       </div>
     </div>

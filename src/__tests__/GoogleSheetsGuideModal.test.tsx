@@ -12,6 +12,6 @@ describe('GoogleSheetsGuideModal', () => {
       />
     );
 
-    expect(screen.getByText('Google Sheets Live Sync Guide')).toBeDefined();
+    expect(screen.getByText('Google Sheets Integration Guide')).toBeDefined();
   });
 });

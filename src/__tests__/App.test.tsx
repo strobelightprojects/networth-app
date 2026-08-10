@@ -24,10 +24,10 @@ vi.mock('firebase/firestore', () => ({
   collection: vi.fn()
 }));
 vi.mock('recharts', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal<typeof import('recharts')>();
   return {
     ...actual,
-    ResponsiveContainer: ({ children }) => <div>{children}</div>,
+    ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
   };
 });
 

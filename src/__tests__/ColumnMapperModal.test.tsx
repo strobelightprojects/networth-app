@@ -17,14 +17,14 @@ describe('ColumnMapperModal', () => {
     
     render(
       <ColumnMapperModal
-        isOpen={true}
-        onClose={vi.fn()}
-        onConfirm={onConfirm}
         parsedData={mockData}
+        baseCurrency="USD"
+        onClose={vi.fn()}
+        onConfirmImport={onConfirm}
       />
     );
 
-    expect(screen.getByText('Map Spreadsheet Columns')).toBeDefined();
+    expect(screen.getByText('Map & Preview Spreadsheet Columns')).toBeDefined();
     expect(screen.getAllByText('Item Name')[0]).toBeDefined();
   });
 });

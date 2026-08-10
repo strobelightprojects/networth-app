@@ -53,5 +53,20 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom'],
+            charts: ['recharts'],
+            xlsx: ['xlsx', 'papaparse'],
+            firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+            icons: ['lucide-react'],
+          },
+        },
+      },
+    },
   };
 });

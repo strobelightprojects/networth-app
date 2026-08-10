@@ -1,8 +1,48 @@
 import { describe, it, expect } from 'vitest';
-import { parseGoogleSheetUrl, extractDateFromFilename, suggestColumnMapping, convertRowsToItems, parseCSVText, parseExcelFile } from '../utils/excelParser';
+import { parseGoogleSheetUrl, extractDateFromFilename, suggestColumnMapping, convertRowsToItems, parseCSVText, parseExcelFile, parseDateString, detectGlobalDateFromSheet } from '../utils/excelParser';
 import { ColumnMapping } from '../types';
 
 describe('excelParser', () => {
+  describe('parseDateString', () => {
+    it('parses YYYY-MM-DD', () => {
+      expect(parseDateString('2024-05-15')).toBe('2024-05-15');
+      expect(parseDateString('2025/11/03')).toBe('2025-11-03');
+    });
+
+    it('parses MM/DD/YYYY', () => {
+      expect(parseDateString('05/15/2024')).toBe('2024-05-15');
+      expect(parseDateString('12/01/2023')).toBe('2023-12-01');
+    });
+
+    it('parses YYYY-MM', () => {
+      expect(parseDateString('2024-06')).toBe('2024-06-01');
+    });
+
+    it('parses text dates like January 15, 2024', () => {
+      expect(parseDateString('January 15, 2024')).toBe('2024-01-15');
+    });
+
+    it('returns null for invalid or empty inputs', () => {
+      expect(parseDateString('')).toBeNull();
+      expect(parseDateString('abc')).toBeNull();
+      expect(parseDateString(null)).toBeNull();
+    });
+  });
+
+  describe('detectGlobalDateFromSheet', () => {
+    it('detects as-of dates in row cells', () => {
+      const rows = [
+        { Title: 'Net Worth Statement As Of 2024-03-31' },
+        { Name: 'Cash', Value: 1000 },
+      ];
+      expect(detectGlobalDateFromSheet(rows)).toBe('2024-03-31');
+    });
+
+    it('detects dates from filename if not in rows', () => {
+      const rows = [{ Name: 'Checking', Value: 5000 }];
+      expect(detectGlobalDateFromSheet(rows, 'Portfolio_jan_2025.xlsx')).toBe('2025-01');
+    });
+  });
   describe('parseCSVText', () => {
     it('returns empty result for empty string', () => {
       const result = parseCSVText('', 'empty.csv');
@@ -145,6 +185,17 @@ describe('excelParser', () => {
       ];
       const items = convertRowsToItems(rows, { nameCol: 'Name', valueCol: 'Value' });
       expect(items.length).toBe(0);
+    });
+
+    it('extracts row dates from date column or cell values', () => {
+      const rows = [
+        { Name: 'Savings', Value: 1000, Date: '2024-03-15' },
+        { Name: 'Stocks', Value: 5000, Date: '2024-04-01' },
+      ];
+      const items = convertRowsToItems(rows, { nameCol: 'Name', valueCol: 'Value', dateCol: 'Date' });
+      expect(items.length).toBe(2);
+      expect(items[0].lastUpdated).toBe('2024-03-15');
+      expect(items[1].lastUpdated).toBe('2024-04-01');
     });
   });
 });

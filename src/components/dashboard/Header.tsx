@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Menu,
   X,
-  BookOpen,
   ChevronDown
 } from 'lucide-react';
 import { CurrencyCode, PortfolioData } from '../../types';
@@ -26,7 +25,7 @@ interface HeaderProps {
   onOpenManageFilesModal: () => void;
   onDeleteCurrentPortfolio: () => void;
   onOpenImportModal: () => void;
-  onOpenGuideModal: () => void;
+  onOpenGuideModal?: () => void;
   onOpenAddItemModal: () => void;
   onOpenSettingsModal: () => void;
   onOpenAuthModal: () => void;
@@ -133,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Add Item</span>
             </button>
             
-            {/* Account / Cloud Sync Button */}
+            {/* Account / Cloud Storage Button */}
             <button
               onClick={onOpenAuthModal}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
@@ -141,28 +140,19 @@ export const Header: React.FC<HeaderProps> = ({
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/20'
                   : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
-              title={currentUser ? `Cloud Sync Active (${currentUser.email || 'Guest'})` : 'Cloud Sync & Account'}
+              title={currentUser ? `Account Active (${currentUser.email || 'Guest'})` : 'Account & Cloud Storage'}
             >
               {currentUser ? (
                 <>
                   <UserCheck className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-                  <span className="hidden md:inline font-semibold">Cloud Active</span>
+                  <span className="hidden md:inline font-semibold">Account</span>
                 </>
               ) : (
                 <>
                   <Cloud className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="hidden md:inline">Sign In / Sync</span>
+                  <span className="hidden md:inline">Sign In</span>
                 </>
               )}
-            </button>
-
-            {/* Guide Modal Button */}
-            <button
-              onClick={onOpenGuideModal}
-              className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-              title="Google Sheets & Integration Guide"
-            >
-              <BookOpen className="w-4 h-4 text-teal-500" />
             </button>
 
             {/* Settings Button */}
@@ -237,12 +227,12 @@ export const Header: React.FC<HeaderProps> = ({
                 {currentUser ? (
                   <>
                     <UserCheck className="w-4 h-4 text-emerald-500" />
-                    <span>Cloud Active</span>
+                    <span>Account Active</span>
                   </>
                 ) : (
                   <>
                     <Cloud className="w-4 h-4 text-slate-400" />
-                    <span>Sign In / Sync</span>
+                    <span>Sign In</span>
                   </>
                 )}
               </button>
@@ -258,18 +248,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
               >
                 <Settings className="w-4 h-4 text-slate-500" />
-                <span>Settings & Export / Print</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenGuideModal();
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
-              >
-                <BookOpen className="w-4 h-4 text-teal-500" />
-                <span>Google Sheets Integration Guide</span>
+                <span>Settings & Export</span>
               </button>
 
               <button

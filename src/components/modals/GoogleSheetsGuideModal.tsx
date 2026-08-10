@@ -20,8 +20,8 @@ export const GoogleSheetsGuideModal: React.FC<GoogleSheetsGuideModalProps> = ({ 
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white tracking-tight">Google Sheets Live Sync Guide</h3>
-              <p className="text-xs text-slate-400">How to power your net worth dashboard with live spreadsheet formulas.</p>
+              <h3 className="text-base font-bold text-white tracking-tight">Google Sheets Integration Guide</h3>
+              <p className="text-xs text-slate-400">How to power your net worth dashboard with spreadsheet formulas.</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white">
@@ -79,9 +79,9 @@ export const GoogleSheetsGuideModal: React.FC<GoogleSheetsGuideModalProps> = ({ 
               2
             </div>
             <div className="space-y-1">
-              <h4 className="font-bold text-white text-sm">Use Live `=GOOGLEFINANCE()` Formulas</h4>
+              <h4 className="font-bold text-white text-sm">Use `=GOOGLEFINANCE()` Formulas</h4>
               <p className="text-slate-400">
-                You can auto-fetch live stock, ETF, and crypto prices directly inside your sheet cell formulas:
+                You can auto-fetch stock, ETF, and crypto prices directly inside your sheet cell formulas:
               </p>
               <ul className="space-y-1 mt-1 text-slate-300 list-disc list-inside">
                 <li><code className="text-purple-300 font-mono">=GOOGLEFINANCE("VOO") * 50</code> (50 shares of S&P 500 ETF)</li>
@@ -112,7 +112,7 @@ export const GoogleSheetsGuideModal: React.FC<GoogleSheetsGuideModalProps> = ({ 
             <div className="space-y-1">
               <h4 className="font-bold text-white text-sm">Paste Link into Net Worth Tracker</h4>
               <p className="text-slate-400">
-                Click <span className="text-emerald-400 font-semibold">Import Sheet / Excel</span> in Net Worth Tracker, paste your link, and your live net worth dashboard will render automatically!
+                Click <span className="text-emerald-400 font-semibold">Import Sheet / Excel</span> in Net Worth Tracker, paste your link, and your net worth dashboard will render automatically!
               </p>
             </div>
           </div>

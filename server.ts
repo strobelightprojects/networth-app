@@ -204,10 +204,12 @@ Instructions:
 6. Extract the Institution name (e.g. Vanguard, Fidelity, Schwab, Chase) if mentioned or inferrable.
 7. Flag liquid assets as isLiquid: true/false.
 8. Detect item currency code if specified (e.g. EUR, GBP, CAD, AUD, JPY, USD, CHF, INR, BRL, MXN).
+9. Extract any statement date or "as of" date mentioned in the document/table or per item as "date" in YYYY-MM-DD or YYYY-MM format if available.
 
 Respond STRICTLY with valid JSON in this exact structure without markdown formatting or code blocks:
 {
   "currencyDetected": "USD",
+  "date": "2024-03-31",
   "summaryNote": "Brief 1-sentence analysis of parsed data",
   "items": [
     {
@@ -217,7 +219,8 @@ Respond STRICTLY with valid JSON in this exact structure without markdown format
       "value": 150000,
       "currency": "USD",
       "institution": "Vanguard",
-      "isLiquid": true
+      "isLiquid": true,
+      "date": "2024-03-31"
     }
   ]
 }`;

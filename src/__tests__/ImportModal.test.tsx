@@ -9,7 +9,9 @@ vi.mock('../utils/excelParser', () => ({
   parseCSVText: vi.fn(),
   parseGoogleSheetUrl: vi.fn(),
   convertRowsToItems: vi.fn(),
-  extractDateFromFilename: vi.fn().mockReturnValue('2026-08-10')
+  extractDateFromFilename: vi.fn().mockReturnValue('2026-08-10'),
+  detectGlobalDateFromSheet: vi.fn().mockReturnValue(null),
+  parseDateString: vi.fn((val) => (typeof val === 'string' ? val : null)),
 }));
 
 describe('ImportModal', () => {
@@ -99,6 +101,11 @@ describe('ImportModal', () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
+      expect(screen.getByText(/Confirm & Import/)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/Confirm & Import/));
+
+    await waitFor(() => {
       expect(handleImportItems).toHaveBeenCalled();
       expect(handleClose).toHaveBeenCalled();
     });
@@ -134,6 +141,11 @@ describe('ImportModal', () => {
 
     await waitFor(() => {
       expect(excelParser.parseExcelFile).toHaveBeenCalled();
+      expect(screen.getByText(/Confirm & Import/)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/Confirm & Import/));
+
+    await waitFor(() => {
       expect(handleImportItems).toHaveBeenCalled();
     });
   });
@@ -206,6 +218,13 @@ describe('ImportModal', () => {
     const file2 = new File(['Name,Value\nAsset1,150'], 'feb.csv', { type: 'text/csv' });
 
     fireEvent.change(fileInput, { target: { files: [file1, file2] } });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Multiple Statements \/ Files Detected/)).toBeInTheDocument();
+      expect(screen.getByText(/Confirm & Import/)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText(/Confirm & Import/));
 
     await waitFor(() => {
       expect(handleImportBatch).toHaveBeenCalled();
@@ -286,6 +305,11 @@ describe('ImportModal', () => {
     fireEvent.click(screen.getByText('Fetch & Parse Google Sheet'));
 
     await waitFor(() => {
+      expect(screen.getByText(/Confirm & Import/)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/Confirm & Import/));
+
+    await waitFor(() => {
       expect(handleImportItems).toHaveBeenCalled();
       expect(handleClose).toHaveBeenCalled();
     });
@@ -317,6 +341,11 @@ describe('ImportModal', () => {
     const textarea = screen.getByPlaceholderText(/Account Name/);
     fireEvent.change(textarea, { target: { value: 'Item\tAmount\nCar\t15000' } });
     fireEvent.click(screen.getByText('Parse Table Content'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm & Import/)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/Confirm & Import/));
 
     await waitFor(() => {
       expect(handleImportItems).toHaveBeenCalled();
@@ -363,6 +392,11 @@ describe('ImportModal', () => {
     const textarea = screen.getByPlaceholderText(/Account Name/);
     fireEvent.change(textarea, { target: { value: '401k $50000' } });
     fireEvent.click(screen.getByTitle('Use Gemini AI to analyze unstructured sheet text'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Confirm & Import/)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/Confirm & Import/));
 
     await waitFor(() => {
       expect(handleImportItems).toHaveBeenCalledWith(

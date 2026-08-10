@@ -6,20 +6,20 @@ import { SettingsModal } from '../components/modals/SettingsModal';
 describe('SettingsModal', () => {
   it('renders SettingsModal correctly', () => {
     const onExportCSV = vi.fn();
-    const onPrint = vi.fn();
+    const onPreviewReport = vi.fn();
     render(
       <SettingsModal
         isOpen={true}
         onClose={vi.fn()}
         onExportCSV={onExportCSV}
-        onPrint={onPrint}
+        onPreviewReport={onPreviewReport}
       />
     );
 
     expect(screen.getByText('App & Preferences Settings')).toBeDefined();
     
-    const printButton = screen.getByText('Print / Save as PDF');
-    fireEvent.click(printButton);
-    expect(onPrint).toHaveBeenCalled();
+    const reportButton = screen.getByText('Net Worth Report');
+    fireEvent.click(reportButton);
+    expect(onPreviewReport).toHaveBeenCalled();
   });
 });

@@ -287,7 +287,7 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
     }
   }
 
-  // 6. Currency column
+  // 5. Currency column
   const currKeywords = ['currency', 'curr', 'fx', 'ccy', 'denom'];
   for (const kw of currKeywords) {
     const idx = lowerHeaders.findIndex((h) => h.includes(kw));
@@ -297,7 +297,110 @@ export function suggestColumnMapping(headers: string[]): ColumnMapping {
     }
   }
 
+  // 6. Date column
+  const dateKeywords = ['date', 'as of date', 'as of', 'statement date', 'transaction date', 'updated date', 'last updated', 'created', 'period', 'month', 'timestamp'];
+  for (const kw of dateKeywords) {
+    const idx = lowerHeaders.findIndex((h) => h.includes(kw));
+    if (idx !== -1) {
+      mapping.dateCol = headers[idx];
+      break;
+    }
+  }
+
   return mapping;
+}
+
+/**
+ * Safely parses string, JS Date object, or Excel serial into YYYY-MM-DD
+ */
+export function parseDateString(val: any): string | null {
+  if (val === null || val === undefined || val === '') return null;
+
+  // Handle JS Date object
+  if (val instanceof Date && !isNaN(val.getTime())) {
+    return val.toISOString().split('T')[0];
+  }
+
+  // Handle Excel Serial number (e.g. 44500 -> 2021-11-03)
+  if (typeof val === 'number' && val > 30000 && val < 60000) {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const jsDate = new Date(excelEpoch.getTime() + val * 86400000);
+    if (!isNaN(jsDate.getTime())) {
+      return jsDate.toISOString().split('T')[0];
+    }
+  }
+
+  const str = String(val).trim();
+  if (!str) return null;
+
+  // Try YYYY-MM-DD
+  const ymd = str.match(/\b(20\d\d)[-/.](0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])\b/);
+  if (ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+
+  // Try MM/DD/YYYY or M/D/YYYY
+  const mdy = str.match(/\b(0?[1-9]|1[0-2])[-/.](0?[1-9]|[12]\d|3[01])[-/.](20\d\d)\b/);
+  if (mdy) {
+    const mm = mdy[1].padStart(2, '0');
+    const dd = mdy[2].padStart(2, '0');
+    return `${mdy[3]}-${mm}-${dd}`;
+  }
+
+  // Try DD/MM/YYYY where DD > 12
+  const dmy = str.match(/\b([012]\d|3[01])[-/.](0?[1-9]|1[0-2])[-/.](20\d\d)\b/);
+  if (dmy && Number(dmy[1]) > 12) {
+    const dd = dmy[1].padStart(2, '0');
+    const mm = dmy[2].padStart(2, '0');
+    return `${dmy[3]}-${mm}-${dd}`;
+  }
+
+  // Try YYYY-MM
+  const ym = str.match(/\b(20\d\d)[-/.](0[1-9]|1[0-2])\b/);
+  if (ym) return `${ym[1]}-${ym[2]}-01`;
+
+  // Try standard JS Date parse (e.g. "January 15, 2024", "Jan 2024")
+  const parsed = Date.parse(str);
+  if (!isNaN(parsed)) {
+    const d = new Date(parsed);
+    if (d.getFullYear() >= 2000 && d.getFullYear() <= 2099) {
+      return d.toISOString().split('T')[0];
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Searches rows, headers, and filename for an "As Of" date or statement date
+ */
+export function detectGlobalDateFromSheet(rows: Record<string, any>[], fileName?: string): string | null {
+  // 1. Scan rows for explicit date cells or "as of" text
+  for (let i = 0; i < Math.min(rows.length, 15); i++) {
+    const row = rows[i];
+    if (!row) continue;
+    for (const val of Object.values(row)) {
+      if (!val) continue;
+      const strVal = String(val).trim();
+
+      const asOfMatch = strVal.match(/as\s+of\s+([a-zA-Z0-9\s,/-]+)/i);
+      if (asOfMatch && asOfMatch[1]) {
+        const parsedAsOf = parseDateString(asOfMatch[1]);
+        if (parsedAsOf) return parsedAsOf;
+      }
+
+      const parsedDirect = parseDateString(strVal);
+      if (parsedDirect && (strVal.includes('-') || strVal.includes('/') || strVal.includes('20'))) {
+        return parsedDirect;
+      }
+    }
+  }
+
+  // 2. Scan filename
+  if (fileName) {
+    const fnDate = extractDateFromFilename(fileName, '');
+    if (fnDate) return fnDate;
+  }
+
+  return null;
 }
 
 /**
@@ -307,9 +410,13 @@ export function convertRowsToItems(
   rows: Record<string, any>[],
   mapping: ColumnMapping,
   baseCurrency: string = 'USD',
-  rates: Record<string, number> = DEFAULT_USD_RATES
+  rates: Record<string, number> = DEFAULT_USD_RATES,
+  defaultDate?: string
 ): FinancialItem[] {
   const items: FinancialItem[] = [];
+
+  // Determine global sheet date if defaultDate not provided
+  const globalSheetDate = defaultDate || detectGlobalDateFromSheet(rows) || new Date().toISOString().split('T')[0];
 
   rows.forEach((row, idx) => {
     const rawName = String(row[mapping.nameCol] || '').trim();
@@ -384,6 +491,27 @@ export function convertRowsToItems(
     // Determine category
     let category: AssetCategory | LiabilityCategory | InsuranceCategory = inferCategory(rawName, rawCatStr, itemType);
 
+    // Detect Date for this specific row
+    let itemDate: string | null = null;
+
+    if (mapping.dateCol && row[mapping.dateCol]) {
+      itemDate = parseDateString(row[mapping.dateCol]);
+    }
+
+    if (!itemDate) {
+      // Search row cells for a valid date string
+      for (const [key, cellVal] of Object.entries(row)) {
+        if (key === mapping.nameCol || key === mapping.valueCol) continue;
+        const parsedCellDate = parseDateString(cellVal);
+        if (parsedCellDate) {
+          itemDate = parsedCellDate;
+          break;
+        }
+      }
+    }
+
+    const finalItemDate = itemDate || globalSheetDate;
+
     items.push({
       id: `imported-${Date.now()}-${idx}`,
       name: rawName,
@@ -393,7 +521,7 @@ export function convertRowsToItems(
       originalValue: rawNumAbs,
       currency: itemCurrency,
       exchangeRate: exchangeRate,
-      lastUpdated: new Date().toISOString().split('T')[0],
+      lastUpdated: finalItemDate,
     });
   });
 
