@@ -7,6 +7,7 @@ import { suggestCategoryFromAccountName } from '../../utils/aiCategorySuggester'
 interface AddItemModalProps {
   isOpen: boolean;
   baseCurrency?: CurrencyCode;
+  existingItems?: FinancialItem[];
   onClose: () => void;
   onAddItem: (item: FinancialItem) => void;
 }
@@ -44,15 +45,29 @@ const INSURANCE_CATEGORIES: InsuranceCategory[] = [
 export const AddItemModal: React.FC<AddItemModalProps> = ({
   isOpen,
   baseCurrency = 'USD',
+  existingItems = [],
   onClose,
   onAddItem,
 }) => {
   const [type, setType] = useState<ItemType>('asset');
   const [name, setName] = useState<string>('');
   const [category, setCategory] = useState<string>('Stocks & ETFs');
+  const [isCustomCategory, setIsCustomCategory] = useState<boolean>(false);
   const [value, setValue] = useState<string>('');
   const [itemCurrency, setItemCurrency] = useState<string>(baseCurrency);
   const [itemDate, setItemDate] = useState<string>(new Date().toISOString().split('T')[0]);
+
+  // Compute custom categories from existing items
+  const customCategories = React.useMemo(() => {
+    const defaultCats = new Set([...ASSET_CATEGORIES, ...LIABILITY_CATEGORIES, ...INSURANCE_CATEGORIES]);
+    const custom = new Set<string>();
+    existingItems.forEach((item) => {
+      if (!defaultCats.has(item.category)) {
+        custom.add(item.category);
+      }
+    });
+    return Array.from(custom).sort();
+  }, [existingItems]);
 
   // AI Category Suggestion state
   const [aiSuggestion, setAiSuggestion] = useState<ReturnType<typeof suggestCategoryFromAccountName>>(null);
@@ -67,6 +82,9 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       setItemCurrency(baseCurrency);
       setIsFetchingRates(true);
       setUserManuallySetCategory(false);
+      setIsCustomCategory(false);
+      setCategory('Stocks & ETFs');
+      setType('asset');
       setAiSuggestion(null);
       fetchLiveExchangeRates('USD')
         .then((res) => setFxRates(res.rates))
@@ -80,6 +98,9 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     setAiSuggestion(suggestion);
 
     if (suggestion && !userManuallySetCategory) {
+      if (!userManuallySetCategory) {
+        setIsCustomCategory(false);
+      }
       setType(suggestion.suggestedType);
       setCategory(suggestion.suggestedCategory);
     }
@@ -251,44 +272,79 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             <label className="block font-bold text-slate-300 mb-1">
               Category
             </label>
-            <select
-              value={category}
-              onChange={(e) => {
-                const val = e.target.value;
-                setCategory(val);
-                setUserManuallySetCategory(true);
-                if (INSURANCE_CATEGORIES.includes(val as InsuranceCategory)) {
-                  setType('insurance');
-                } else if (ASSET_CATEGORIES.includes(val as AssetCategory)) {
-                  setType('asset');
-                } else if (LIABILITY_CATEGORIES.includes(val as LiabilityCategory)) {
-                  setType('liability');
-                }
-              }}
-              className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500 font-medium cursor-pointer"
-            >
-              <optgroup label="Assets" className="bg-slate-900 text-slate-400 font-bold">
-                {ASSET_CATEGORIES.map((c) => (
-                  <option key={c} value={c} className="bg-slate-900 text-white font-normal">
-                    {c}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Liabilities & Debts" className="bg-slate-900 text-slate-400 font-bold">
-                {LIABILITY_CATEGORIES.map((c) => (
-                  <option key={c} value={c} className="bg-slate-900 text-white font-normal">
-                    {c}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Insurance Policies (Death Benefits)" className="bg-slate-900 text-slate-400 font-bold">
-                {INSURANCE_CATEGORIES.map((c) => (
-                  <option key={c} value={c} className="bg-slate-900 text-white font-normal">
-                    {c}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+            <div className="flex flex-col gap-2">
+              <select
+                value={isCustomCategory ? 'custom_category' : category}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setUserManuallySetCategory(true);
+                  if (val === 'custom_category') {
+                    setIsCustomCategory(true);
+                    setCategory('');
+                  } else {
+                    setIsCustomCategory(false);
+                    setCategory(val);
+                    if (INSURANCE_CATEGORIES.includes(val as InsuranceCategory)) {
+                      setType('insurance');
+                    } else if (ASSET_CATEGORIES.includes(val as AssetCategory)) {
+                      setType('asset');
+                    } else if (LIABILITY_CATEGORIES.includes(val as LiabilityCategory)) {
+                      setType('liability');
+                    }
+                  }
+                }}
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500 font-medium cursor-pointer"
+              >
+                <optgroup label="Assets" className="bg-slate-900 text-slate-400 font-bold">
+                  {ASSET_CATEGORIES.map((c) => (
+                    <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                      {c}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Liabilities & Debts" className="bg-slate-900 text-slate-400 font-bold">
+                  {LIABILITY_CATEGORIES.map((c) => (
+                    <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                      {c}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Insurance Policies (Death Benefits)" className="bg-slate-900 text-slate-400 font-bold">
+                  {INSURANCE_CATEGORIES.map((c) => (
+                    <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                      {c}
+                    </option>
+                  ))}
+                </optgroup>
+                {customCategories.length > 0 && (
+                  <optgroup label="Your Custom Categories" className="bg-slate-900 text-slate-400 font-bold">
+                    {customCategories.map((c) => (
+                      <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                        {c}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                <option value="custom_category" className="bg-slate-900 text-emerald-400 font-bold">
+                  + Add Custom Category...
+                </option>
+              </select>
+
+              {isCustomCategory && (
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  placeholder="e.g. Rare Collectibles, Angel Investments..."
+                  value={category}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setUserManuallySetCategory(true);
+                  }}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-emerald-500/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 animate-fade-in"
+                />
+              )}
+            </div>
             {type === 'insurance' && (
               <p className="mt-1 text-[11px] text-purple-300/80">
                 ℹ️ Death benefits & insurance coverage are tracked separately and do not increase or decrease Net Worth.

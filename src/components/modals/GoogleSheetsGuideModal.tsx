@@ -110,9 +110,9 @@ export const GoogleSheetsGuideModal: React.FC<GoogleSheetsGuideModalProps> = ({ 
               4
             </div>
             <div className="space-y-1">
-              <h4 className="font-bold text-white text-sm">Paste Link into NetWorth Pulse</h4>
+              <h4 className="font-bold text-white text-sm">Paste Link into Net Worth Tracker</h4>
               <p className="text-slate-400">
-                Click <span className="text-emerald-400 font-semibold">Import Sheet / Excel</span> in NetWorth Pulse, paste your link, and your live net worth dashboard will render automatically!
+                Click <span className="text-emerald-400 font-semibold">Import Sheet / Excel</span> in Net Worth Tracker, paste your link, and your live net worth dashboard will render automatically!
               </p>
             </div>
           </div>

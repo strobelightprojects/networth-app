@@ -7,7 +7,8 @@ export type AssetCategory =
   | 'Precious Metals'
   | 'Bonds & Fixed Income'
   | 'Alternative & Private'
-  | 'Vehicle & Physical';
+  | 'Vehicle & Physical'
+  | (string & {});
 
 export type LiabilityCategory = 
   | 'Mortgage'
@@ -15,7 +16,8 @@ export type LiabilityCategory =
   | 'Student Loans'
   | 'Auto Loans'
   | 'Personal Loans'
-  | 'Other Liabilities';
+  | 'Other Liabilities'
+  | (string & {});
 
 export type InsuranceCategory = 
   | 'Term Life Insurance'
@@ -23,7 +25,8 @@ export type InsuranceCategory =
   | 'Universal Life Insurance'
   | 'Disability Insurance'
   | 'Health & Long-Term Care'
-  | 'Property & Umbrella';
+  | 'Property & Umbrella'
+  | (string & {});
 
 export type ItemType = 'asset' | 'liability' | 'insurance';
 

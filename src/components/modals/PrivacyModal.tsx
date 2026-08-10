@@ -44,7 +44,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({
               1. What Data We Collect & Store
             </h3>
             <p className="text-slate-400">
-              NetWorth Pulse is designed with a minimal data footprint. We only store:
+              Net Worth Tracker is designed with a minimal data footprint. We only store:
             </p>
             <ul className="list-disc pl-5 space-y-1 text-slate-300">
               <li><strong>Account Identifiers:</strong> Your email address or anonymous Firebase Auth UID when signed in.</li>
@@ -89,7 +89,7 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({
               4. Financial & Legal Disclaimer
             </h3>
             <p className="text-amber-200/90 leading-relaxed">
-              NetWorth Pulse is strictly an informational tool provided for personal tracking and spreadsheet visualization. 
+              Net Worth Tracker is strictly an informational tool provided for personal tracking and spreadsheet visualization. 
               <strong> It does not constitute formal tax, legal, investment, financial planning, or accounting advice.</strong> 
               Calculations, exchange conversions, and milestones are estimates based on user input. Always consult a qualified CPA or licensed financial advisor for professional guidance regarding financial decisions.
             </p>

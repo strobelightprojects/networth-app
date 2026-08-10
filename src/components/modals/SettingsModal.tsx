@@ -4,10 +4,8 @@ import { X, Key, Save, AlertCircle, Download, Printer, Sliders, FileSpreadsheet,
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onExportCSV?: () => void;
-  onPrint?: () => void;
-  theme?: 'dark' | 'light';
-  onToggleTheme?: () => void;
+  onExportCSV?: (startDate?: string, endDate?: string) => void;
+  onPrint?: (startDate?: string, endDate?: string) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -15,11 +13,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   onExportCSV,
   onPrint,
-  theme,
-  onToggleTheme
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [saved, setSaved] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -61,52 +59,45 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto">
           
-          {/* Visual Theme Section */}
-          {onToggleTheme && (
-            <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                {theme === 'dark' ? <Moon className="w-4 h-4 text-amber-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                Appearance Theme
-              </h4>
-              <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl">
-                <div>
-                  <div className="text-xs font-bold text-slate-900 dark:text-white">Active Display Theme</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Currently set to <span className="font-semibold text-emerald-600 dark:text-emerald-400 capitalize">{theme || 'dark'}</span> mode
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={onToggleTheme}
-                  className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 transition-colors flex items-center gap-2 cursor-pointer"
-                >
-                  {theme === 'dark' ? (
-                    <>
-                      <Sun className="w-3.5 h-3.5 text-amber-400" /> Switch to Light Mode
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-3.5 h-3.5 text-slate-700" /> Switch to Dark Mode
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Quick Actions / Export & Print Section */}
           <div className="space-y-3">
             <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <Download className="w-4 h-4 text-teal-500 dark:text-teal-400" />
               Download & Export Options
             </h4>
+
+            {/* Date Range Selector */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Start Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-1.5 px-3 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="flex flex-col w-full">
+                <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  End Date (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-1.5 px-3 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {onExportCSV && (
                 <button
                   type="button"
                   onClick={() => {
-                    onExportCSV();
+                    onExportCSV(startDate, endDate);
                   }}
                   className="p-3 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-xl text-left transition-all flex items-start gap-3 group cursor-pointer"
                 >
@@ -128,7 +119,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    onPrint();
+                    onPrint(startDate, endDate);
                   }}
                   className="p-3 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-xl text-left transition-all flex items-start gap-3 group cursor-pointer"
                 >

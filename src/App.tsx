@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SAMPLE_PORTFOLIOS, DEFAULT_PORTFOLIO } from './data/samplePortfolios';
 import { PortfolioData, FinancialItem, CurrencyCode, ParsedSheetData, ImportOptions, ImportMode, HistoricalSnapshot, BatchFileSnapshot } from './types';
 import { 
@@ -190,25 +190,13 @@ export default function App() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState<boolean>(false);
 
-  // Dark / Light Theme State
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    const savedTheme = localStorage.getItem('networth_theme');
-    if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme;
-    return 'dark';
-  });
+  // Global Date Filter for Reports
+  const [reportStartDate, setReportStartDate] = useState<string>('');
+  const [reportEndDate, setReportEndDate] = useState<string>('');
 
   useEffect(() => {
-    localStorage.setItem('networth_theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
-
-  const handleToggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+    document.documentElement.classList.add('dark');
+  }, []);
 
   // Helper to upsert history points chronologically
   const upsertHistoryPoint = (
@@ -292,6 +280,22 @@ export default function App() {
 
   // Active Portfolio Object
   const currentPortfolio = portfolios.find((p) => p.id === selectedPortfolioId) || portfolios[0];
+
+  const filteredPortfolio = useMemo(() => {
+    let items = currentPortfolio.items;
+    let history = currentPortfolio.history;
+
+    if (reportStartDate) {
+      items = items.filter((i) => (i.lastUpdated || '') >= reportStartDate);
+      history = history.filter((h) => h.date >= reportStartDate.substring(0, 7));
+    }
+    if (reportEndDate) {
+      items = items.filter((i) => (i.lastUpdated || '') <= reportEndDate);
+      history = history.filter((h) => h.date <= reportEndDate.substring(0, 7));
+    }
+
+    return { ...currentPortfolio, items, history };
+  }, [currentPortfolio, reportStartDate, reportEndDate]);
 
   // Handle Item Updates (Inline edit or toggle)
   const handleUpdateItem = (updatedItem: FinancialItem) => {
@@ -537,16 +541,42 @@ export default function App() {
   };
 
   // CSV Export
-  const handleExportCSV = () => {
-    const headers = ['Account Name', 'Type', 'Category', 'Balance'];
-    const rows = currentPortfolio.items.map((i) => [
+  const handleExportCSV = (startDate?: string, endDate?: string) => {
+    let items = currentPortfolio.items;
+    let history = currentPortfolio.history;
+
+    if (startDate) {
+      items = items.filter((i) => (i.lastUpdated || '') >= startDate);
+      history = history.filter((h) => h.date >= startDate.substring(0, 7));
+    }
+    if (endDate) {
+      items = items.filter((i) => (i.lastUpdated || '') <= endDate);
+      history = history.filter((h) => h.date <= endDate.substring(0, 7));
+    }
+
+    const headers = ['Account Name', 'Type', 'Category', 'Balance', 'Last Updated'];
+    const rows = items.map((i) => [
       `"${i.name.replace(/"/g, '""')}"`,
       i.type,
       `"${i.category}"`,
       i.value,
+      i.lastUpdated || ''
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const historyHeaders = ['Date (YYYY-MM)', 'Total Assets', 'Total Liabilities', 'Net Worth'];
+    const historyRows = history.map((h) => [
+      h.date,
+      h.totalAssets,
+      h.totalLiabilities,
+      h.netWorth
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' 
+      + 'Items\n'
+      + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+      + '\n\nHistory\n'
+      + [historyHeaders.join(','), ...historyRows.map((r) => r.join(','))].join('\n');
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -554,6 +584,14 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handlePrint = (startDate?: string, endDate?: string) => {
+    setReportStartDate(startDate || '');
+    setReportEndDate(endDate || '');
+    setTimeout(() => {
+      window.print();
+    }, 500); // Allow time for React to re-render with filtered data
   };
 
   return (
@@ -574,12 +612,10 @@ export default function App() {
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onOpenPrivacyModal={() => setIsPrivacyModalOpen(true)}
         onExportCSV={handleExportCSV}
-        onPrint={() => window.print()}
+        onPrint={handlePrint}
         currency={currency}
         onChangeCurrency={(c) => setCurrency(c)}
         currentUser={currentUser}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
       />
 
       {/* Main Content Dashboard */}
@@ -587,27 +623,32 @@ export default function App() {
         
         {/* Print-only Header */}
         <div className="hidden print:block mb-8">
-          <h1 className="text-3xl font-bold mb-2">Net Worth Report: {currentPortfolio.name}</h1>
+          <h1 className="text-3xl font-bold mb-2">Net Worth Report: {filteredPortfolio.name}</h1>
           <p className="text-sm text-slate-500">Generated on {new Date().toLocaleDateString()}</p>
+          {(reportStartDate || reportEndDate) && (
+            <p className="text-xs text-slate-500 mt-1">
+              Date Filter: {reportStartDate || 'Any'} to {reportEndDate || 'Present'}
+            </p>
+          )}
         </div>
 
         {/* KPI Cards Summary */}
-        <KPICards portfolio={currentPortfolio} currency={currency} />
+        <KPICards portfolio={filteredPortfolio} currency={currency} />
 
         {/* Portfolio Allocation */}
         <div className="grid grid-cols-1 gap-6">
-          <AllocationChart portfolio={currentPortfolio} currency={currency} />
+          <AllocationChart portfolio={filteredPortfolio} currency={currency} />
         </div>
 
         {/* Historical Net Worth Trajectory & Projection Chart */}
         <NetWorthChart
-          portfolio={currentPortfolio}
+          portfolio={filteredPortfolio}
           currency={currency}
         />
 
         {/* Asset & Liability Ledger Table */}
         <AssetsLiabilitiesLedger
-          items={currentPortfolio.items}
+          items={filteredPortfolio.items}
           currency={currency}
           onUpdateItem={handleUpdateItem}
           onDeleteItem={handleDeleteItem}
@@ -619,10 +660,10 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-8 px-4 text-center text-xs text-slate-500 space-y-3">
         <p className="max-w-4xl mx-auto text-slate-400 leading-relaxed text-[11px]">
-          <strong>Financial Disclaimer:</strong> NetWorth Pulse is strictly an informational tool provided for personal tracking and spreadsheet visualization. It does not constitute formal tax, legal, investment, financial planning, or accounting advice. Calculations and milestones are estimates based on user input.
+          <strong>Financial Disclaimer:</strong> Net Worth Tracker is strictly an informational tool provided for personal tracking and spreadsheet visualization. It does not constitute formal tax, legal, investment, financial planning, or accounting advice. Calculations and milestones are estimates based on user input.
         </p>
         <div className="flex items-center justify-center gap-4 text-[11px] text-slate-500">
-          <span>NetWorth Pulse © 2026</span>
+          <span>Net Worth Tracker © 2026</span>
           <span>•</span>
           <button
             onClick={() => setIsPrivacyModalOpen(true)}
@@ -692,9 +733,7 @@ export default function App() {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         onExportCSV={handleExportCSV}
-        onPrint={() => window.print()}
-        theme={theme}
-        onToggleTheme={handleToggleTheme}
+        onPrint={handlePrint}
       />
 
       <AuthModal

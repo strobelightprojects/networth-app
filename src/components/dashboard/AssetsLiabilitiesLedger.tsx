@@ -227,11 +227,26 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
     };
   }, [processedItems]);
 
+  // Compute custom categories
+  const customCategories = React.useMemo(() => {
+    const defaultCats = new Set([...ALL_ASSET_CATEGORIES, ...ALL_LIABILITY_CATEGORIES, ...ALL_INSURANCE_CATEGORIES]);
+    const custom = new Set<string>();
+    items.forEach((item) => {
+      if (!defaultCats.has(item.category)) {
+        custom.add(item.category);
+      }
+    });
+    return Array.from(custom).sort();
+  }, [items]);
+
+  const [isEditCustomCategory, setIsEditCustomCategory] = useState<boolean>(false);
+
   const startEdit = (item: FinancialItem) => {
     setEditingId(item.id);
     setEditName(item.name);
     setEditValue(item.value);
     setEditCategory(item.category);
+    setIsEditCustomCategory(false);
     setEditType(item.type);
     setEditDate(item.lastUpdated || new Date().toISOString().split('T')[0]);
   };
@@ -1121,48 +1136,87 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                     {/* Category Selector */}
                     <td className="py-3 px-4">
                       {isEditing ? (
-                        <select
-                          value={editCategory}
-                          onChange={(e) => {
-                            const newCat = e.target.value as AssetCategory | LiabilityCategory | InsuranceCategory;
-                            setEditCategory(newCat);
-                            if (ALL_INSURANCE_CATEGORIES.includes(newCat as InsuranceCategory)) {
-                              setEditType('insurance');
-                            } else if (ALL_ASSET_CATEGORIES.includes(newCat as AssetCategory)) {
-                              setEditType('asset');
-                            } else if (ALL_LIABILITY_CATEGORIES.includes(newCat as LiabilityCategory)) {
-                              setEditType('liability');
-                            }
-                          }}
-                          className="px-2 py-1 bg-slate-800 border border-emerald-500 rounded text-xs text-white font-medium focus:outline-none"
-                        >
-                          <optgroup label="Assets" className="bg-slate-900 text-slate-400 font-bold">
-                            {ALL_ASSET_CATEGORIES.map((c) => (
-                              <option key={c} value={c} className="bg-slate-900 text-white font-normal">
-                                {c}
-                              </option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="Liabilities & Debts" className="bg-slate-900 text-slate-400 font-bold">
-                            {ALL_LIABILITY_CATEGORIES.map((c) => (
-                              <option key={c} value={c} className="bg-slate-900 text-white font-normal">
-                                {c}
-                              </option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="Insurance Policies" className="bg-slate-900 text-slate-400 font-bold">
-                            {ALL_INSURANCE_CATEGORIES.map((c) => (
-                              <option key={c} value={c} className="bg-slate-900 text-white font-normal">
-                                {c}
-                              </option>
-                            ))}
-                          </optgroup>
-                        </select>
+                        <div className="flex flex-col gap-2">
+                          <select
+                            value={isEditCustomCategory ? 'custom_category' : editCategory}
+                            onChange={(e) => {
+                              const newCat = e.target.value;
+                              if (newCat === 'custom_category') {
+                                setIsEditCustomCategory(true);
+                                setEditCategory('');
+                              } else {
+                                setIsEditCustomCategory(false);
+                                setEditCategory(newCat);
+                                if (ALL_INSURANCE_CATEGORIES.includes(newCat as InsuranceCategory)) {
+                                  setEditType('insurance');
+                                } else if (ALL_ASSET_CATEGORIES.includes(newCat as AssetCategory)) {
+                                  setEditType('asset');
+                                } else if (ALL_LIABILITY_CATEGORIES.includes(newCat as LiabilityCategory)) {
+                                  setEditType('liability');
+                                }
+                              }
+                            }}
+                            className="px-2 py-1 bg-slate-800 border border-emerald-500 rounded text-xs text-white font-medium focus:outline-none"
+                          >
+                            <optgroup label="Assets" className="bg-slate-900 text-slate-400 font-bold">
+                              {ALL_ASSET_CATEGORIES.map((c) => (
+                                <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                                  {c}
+                                </option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="Liabilities & Debts" className="bg-slate-900 text-slate-400 font-bold">
+                              {ALL_LIABILITY_CATEGORIES.map((c) => (
+                                <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                                  {c}
+                                </option>
+                              ))}
+                            </optgroup>
+                            <optgroup label="Insurance Policies" className="bg-slate-900 text-slate-400 font-bold">
+                              {ALL_INSURANCE_CATEGORIES.map((c) => (
+                                <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                                  {c}
+                                </option>
+                              ))}
+                            </optgroup>
+                            {customCategories.length > 0 && (
+                              <optgroup label="Your Custom Categories" className="bg-slate-900 text-slate-400 font-bold">
+                                {customCategories.map((c) => (
+                                  <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                                    {c}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
+                            <option value="custom_category" className="bg-slate-900 text-emerald-400 font-bold">
+                              + Add Custom Category...
+                            </option>
+                          </select>
+                          {isEditCustomCategory && (
+                            <input
+                              type="text"
+                              required
+                              autoFocus
+                              placeholder="e.g. Angel Investments"
+                              value={editCategory}
+                              onChange={(e) => setEditCategory(e.target.value)}
+                              className="px-2 py-1 bg-slate-800 border border-emerald-500/50 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 animate-fade-in"
+                            />
+                          )}
+                        </div>
                       ) : (
                         <select
                           value={item.category}
                           onChange={(e) => {
-                            const newCat = e.target.value as AssetCategory | LiabilityCategory | InsuranceCategory;
+                            const newCat = e.target.value;
+                            if (newCat === 'custom_category') {
+                              // Instead of immediate edit, start full row edit
+                              startEdit(item);
+                              setIsEditCustomCategory(true);
+                              setEditCategory('');
+                              return;
+                            }
+                            
                             let newType = item.type;
                             if (ALL_INSURANCE_CATEGORIES.includes(newCat as InsuranceCategory)) {
                               newType = 'insurance';
@@ -1202,6 +1256,18 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                               </option>
                             ))}
                           </optgroup>
+                          {customCategories.length > 0 && (
+                            <optgroup label="Your Custom Categories" className="bg-slate-900 text-slate-400 font-bold">
+                              {customCategories.map((c) => (
+                                <option key={c} value={c} className="bg-slate-900 text-white font-normal">
+                                  {c}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          <option value="custom_category" className="bg-slate-900 text-emerald-400 font-bold">
+                            + Add Custom...
+                          </option>
                         </select>
                       )}
                     </td>

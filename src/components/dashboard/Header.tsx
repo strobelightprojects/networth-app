@@ -35,8 +35,6 @@ interface HeaderProps {
   currency: CurrencyCode;
   onChangeCurrency: (c: CurrencyCode) => void;
   currentUser: User | null;
-  theme: 'dark' | 'light';
-  onToggleTheme: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -57,8 +55,6 @@ export const Header: React.FC<HeaderProps> = ({
   currency,
   onChangeCurrency,
   currentUser,
-  theme,
-  onToggleTheme,
 }) => {
   return (
     <header className="print:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 sticky top-0 z-30 shadow-sm transition-colors">
@@ -153,19 +149,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <Cloud className="w-3.5 h-3.5 text-slate-400" />
                 <span className="hidden md:inline">Sign In / Sync</span>
               </>
-            )}
-          </button>
-
-          {/* Dark / Light Theme Toggle Button */}
-          <button
-            onClick={onToggleTheme}
-            className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center cursor-pointer"
-            title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-700" />
             )}
           </button>
 
