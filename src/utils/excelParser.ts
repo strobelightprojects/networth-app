@@ -4,36 +4,6 @@ import { FinancialItem, ParsedSheetData, ColumnMapping, ItemType, AssetCategory,
 import { detectCurrencyCodeFromText, convertCurrencyAmount, DEFAULT_USD_RATES } from './currency';
 
 /**
- * Extracts Google Spreadsheet ID and GID from any Google Sheet URL
- */
-export function parseGoogleSheetUrl(url: string): { csvUrl: string; spreadsheetId: string | null } | null {
-  try {
-    const trimmed = url.trim();
-    if (!trimmed) return null;
-
-    // Handle published Google Sheets links e.g. /pub?output=csv
-    if (trimmed.includes('/pub') && (trimmed.includes('output=csv') || trimmed.includes('output=tsv'))) {
-      return { csvUrl: trimmed, spreadsheetId: 'published' };
-    }
-
-    const sheetIdMatch = trimmed.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    if (!sheetIdMatch || !sheetIdMatch[1]) return null;
-
-    const spreadsheetId = sheetIdMatch[1];
-    
-    // Extract gid if present in query parameter or hash
-    const gidMatch = trimmed.match(/[?&]gid=([0-9]+)/) || trimmed.match(/#gid=([0-9]+)/);
-    const gid = gidMatch ? gidMatch[1] : '0';
-
-    // Google Sheets export to CSV link format
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-    return { csvUrl, spreadsheetId };
-  } catch (err) {
-    return null;
-  }
-}
-
-/**
  * Parses XLSX/XLS ArrayBuffer file using SheetJS
  */
 export function parseExcelFile(arrayBuffer: ArrayBuffer, fileName: string): ParsedSheetData {

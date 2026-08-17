@@ -3,6 +3,7 @@ import { PlusCircle, X, Check, Wallet, CreditCard, Shield, RefreshCw, ArrowRight
 import { FinancialItem, AssetCategory, LiabilityCategory, InsuranceCategory, ItemType, CurrencyCode } from '../../types';
 import { CURRENCY_LIST, fetchLiveExchangeRates, convertCurrencyAmount, getCurrencySymbol } from '../../utils/currency';
 import { suggestCategoryFromAccountName } from '../../utils/aiCategorySuggester';
+import { suggestCategoriesWithGemini } from '../../utils/geminiCategoryService';
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -72,6 +73,8 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   // AI Category Suggestion state
   const [aiSuggestion, setAiSuggestion] = useState<ReturnType<typeof suggestCategoryFromAccountName>>(null);
   const [userManuallySetCategory, setUserManuallySetCategory] = useState<boolean>(false);
+  const [isGeminiSuggesting, setIsGeminiSuggesting] = useState<boolean>(false);
+  const [geminiReasoning, setGeminiReasoning] = useState<string | null>(null);
 
   // FX Rates state
   const [fxRates, setFxRates] = useState<Record<string, number>>({});
@@ -86,6 +89,8 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       setCategory('Stocks & ETFs');
       setType('asset');
       setAiSuggestion(null);
+      setGeminiReasoning(null);
+      setIsGeminiSuggesting(false);
       fetchLiveExchangeRates('USD')
         .then((res) => setFxRates(res.rates))
         .finally(() => setIsFetchingRates(false));
@@ -98,13 +103,45 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     setAiSuggestion(suggestion);
 
     if (suggestion && !userManuallySetCategory) {
-      if (!userManuallySetCategory) {
-        setIsCustomCategory(false);
-      }
+      setIsCustomCategory(false);
       setType(suggestion.suggestedType);
       setCategory(suggestion.suggestedCategory);
     }
   }, [name, userManuallySetCategory]);
+
+  const handleAskGemini = async () => {
+    if (!name.trim()) return;
+    setIsGeminiSuggesting(true);
+    setGeminiReasoning(null);
+
+    try {
+      const results = await suggestCategoriesWithGemini([{
+        name: name.trim(),
+        type,
+        category,
+        value: parseFloat(value) || 0,
+      }]);
+
+      if (results && results.length > 0) {
+        const res = results[0];
+        setType(res.suggestedType);
+        setCategory(res.suggestedCategory);
+        setIsCustomCategory(false);
+        setUserManuallySetCategory(false);
+        setGeminiReasoning(res.reasoning || 'Categorized by Gemini AI');
+        setAiSuggestion({
+          suggestedType: res.suggestedType,
+          suggestedCategory: res.suggestedCategory as any,
+          matchedKeyword: 'Gemini AI',
+          confidence: res.confidence,
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching Gemini AI suggestion:', err);
+    } finally {
+      setIsGeminiSuggesting(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -213,9 +250,22 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
           {/* Item Name */}
           <div>
-            <label className="block font-bold text-slate-300 mb-1">
-              {type === 'insurance' ? 'Policy or Benefit Name' : 'Account or Asset Name'} <span className="text-rose-400">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-bold text-slate-300">
+                {type === 'insurance' ? 'Policy or Benefit Name' : 'Account or Asset Name'} <span className="text-rose-400">*</span>
+              </label>
+              {name.trim().length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleAskGemini}
+                  disabled={isGeminiSuggesting}
+                  className="text-[11px] font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded-lg border border-purple-500/20 cursor-pointer disabled:opacity-50"
+                >
+                  <Sparkles className="w-3 h-3 text-purple-400" />
+                  {isGeminiSuggesting ? 'Gemini AI thinking...' : 'Ask Gemini AI'}
+                </button>
+              )}
+            </div>
             <input
               type="text"
               required
@@ -236,14 +286,19 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
           {aiSuggestion && (
             <div className="p-2.5 bg-indigo-950/50 border border-indigo-500/30 rounded-xl flex items-center justify-between text-xs text-indigo-300 animate-fade-in">
               <div className="flex items-center gap-2">
-                <div className="p-1 rounded bg-indigo-500/20 text-indigo-400">
+                <div className="p-1 rounded bg-indigo-500/20 text-indigo-400 shrink-0">
                   <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <span className="text-[11px] text-indigo-300/80 block">AI Category Suggestion</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300/80 block">
+                    {geminiReasoning ? 'Gemini AI Recommendation' : 'Suggested Category'}
+                  </span>
                   <span className="font-bold text-white text-xs">
                     {aiSuggestion.suggestedCategory} <span className="text-indigo-400 text-[10px]">({aiSuggestion.suggestedType.toUpperCase()})</span>
                   </span>
+                  {geminiReasoning && (
+                    <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">{geminiReasoning}</p>
+                  )}
                 </div>
               </div>
 
@@ -255,12 +310,12 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     setCategory(aiSuggestion.suggestedCategory);
                     setUserManuallySetCategory(false);
                   }}
-                  className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-[10px] shadow-sm transition-colors"
+                  className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-[10px] shadow-sm transition-colors shrink-0"
                 >
                   Apply AI Choice
                 </button>
               ) : (
-                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
+                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1 shrink-0">
                   <Check className="w-3 h-3" /> Auto-applied
                 </span>
               )}

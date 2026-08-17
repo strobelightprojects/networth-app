@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   FileSpreadsheet, 
   Upload, 
-  Link, 
   Sparkles, 
   Table, 
   X, 
@@ -21,10 +20,11 @@ import {
   Eye,
   ArrowLeft
 } from 'lucide-react';
-import { parseExcelFile, parseCSVText, parseGoogleSheetUrl, convertRowsToItems, extractDateFromFilename, detectGlobalDateFromSheet, parseDateString } from '../../utils/excelParser';
+import { parseExcelFile, parseCSVText, convertRowsToItems, extractDateFromFilename, detectGlobalDateFromSheet, parseDateString } from '../../utils/excelParser';
 import { FinancialItem, ParsedSheetData, ColumnMapping, ImportOptions, ImportMode, BatchFileSnapshot } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { auth } from '../../lib/firebase';
+import { suggestCategoriesWithGemini } from '../../utils/geminiCategoryService';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -49,8 +49,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   onImportBatch,
   onOpenColumnMapper,
 }) => {
-  const [activeTab, setActiveTab] = useState<'file' | 'googlesheets' | 'paste'>('file');
-  const [gsUrl, setGsUrl] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'file' | 'paste'>('file');
   const [pasteText, setPasteText] = useState<string>('');
   const [portfolioTitle, setPortfolioTitle] = useState<string>('');
   const [importDate, setImportDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -62,6 +61,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
   // Data Preview State
   const [previewData, setPreviewData] = useState<PreviewState | null>(null);
+  const [isCategorizingWithGemini, setIsCategorizingWithGemini] = useState<boolean>(false);
+  const [aiCategorizedSuccessMsg, setAiCategorizedSuccessMsg] = useState<string | null>(null);
+  const [aiItemReasons, setAiItemReasons] = useState<Record<string, { confidence: string; reasoning?: string }>>({});
 
   React.useEffect(() => {
     if (isOpen) {
@@ -69,13 +71,66 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       setStatusMsg(null);
       setIsLoading(false);
       setPasteText('');
-      setGsUrl('');
       setPortfolioTitle('');
       setImportDate(new Date().toISOString().split('T')[0]);
       setImportMode('replace');
       setPreviewData(null);
+      setIsCategorizingWithGemini(false);
+      setAiCategorizedSuccessMsg(null);
+      setAiItemReasons({});
     }
   }, [isOpen]);
+
+  // Trigger Gemini AI category suggestions on preview items
+  const handleSuggestCategoriesWithGemini = async () => {
+    if (!previewData || previewData.items.length === 0) return;
+
+    setIsCategorizingWithGemini(true);
+    setErrorMsg(null);
+    setAiCategorizedSuccessMsg(null);
+
+    try {
+      const suggestions = await suggestCategoriesWithGemini(
+        previewData.items.map((it) => ({
+          name: it.name,
+          type: it.type,
+          category: it.category,
+          value: it.value,
+        }))
+      );
+
+      const reasonsMap: Record<string, { confidence: string; reasoning?: string }> = {};
+
+      const updatedItems = previewData.items.map((item, idx) => {
+        const suggestion = suggestions.find((s) => s.index === idx) || suggestions[idx];
+        if (suggestion) {
+          reasonsMap[item.id] = {
+            confidence: suggestion.confidence,
+            reasoning: suggestion.reasoning,
+          };
+          return {
+            ...item,
+            category: suggestion.suggestedCategory,
+            type: suggestion.suggestedType,
+          };
+        }
+        return item;
+      });
+
+      setPreviewData({
+        ...previewData,
+        items: updatedItems,
+      });
+
+      setAiItemReasons((prev) => ({ ...prev, ...reasonsMap }));
+      setAiCategorizedSuccessMsg(`✨ Gemini AI analyzed item names and organized categories for all ${updatedItems.length} accounts!`);
+    } catch (err: any) {
+      console.error('Gemini category suggestion error:', err);
+      setErrorMsg(err?.message || 'Failed to suggest categories with Gemini AI.');
+    } finally {
+      setIsCategorizingWithGemini(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -171,94 +226,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     }
   };
 
-  // Process Google Sheets Link
-  const handleFetchGoogleSheet = async () => {
-    if (!gsUrl.trim()) {
-      setErrorMsg('Please enter Google Sheets URL(s)');
-      return;
-    }
-
-    const urls = gsUrl.split(/[,\n]/).map(u => u.trim()).filter(u => u);
-
-    setIsLoading(true);
-    setErrorMsg(null);
-    setStatusMsg(`Fetching ${urls.length} Google Sheet${urls.length > 1 ? 's' : ''}...`);
-
-    try {
-      if (urls.length === 1) {
-        const parsedLink = parseGoogleSheetUrl(urls[0]);
-        if (!parsedLink) {
-          throw new Error('Invalid Google Sheets URL. Please make sure the sheet is public or shareable ("Anyone with the link can view").');
-        }
-
-        const res = await fetch(`/api/fetch-google-sheet?url=${encodeURIComponent(parsedLink.csvUrl)}`);
-        if (!res.ok) {
-          throw new Error(`Failed to access Google Sheet (${res.status}). Ensure "Anyone with the link can view" is enabled in Google Sheets sharing settings.`);
-        }
-
-        const csvText = await res.text();
-        const parsedData = parseCSVText(csvText, 'GoogleSheet.csv');
-        handleParsedSheet(parsedData);
-      } else {
-        // Process multiple sheets
-        let combinedItems: FinancialItem[] = [];
-        let primaryBatchDate = importDate;
-        
-        for (let i = 0; i < urls.length; i++) {
-          setStatusMsg(`Fetching Google Sheet ${i + 1} of ${urls.length}...`);
-          const url = urls[i];
-          const parsedLink = parseGoogleSheetUrl(url);
-          if (!parsedLink) {
-             throw new Error(`Invalid Google Sheets URL on line ${i+1}.`);
-          }
-          const res = await fetch(`/api/fetch-google-sheet?url=${encodeURIComponent(parsedLink.csvUrl)}`);
-          if (!res.ok) {
-            throw new Error(`Failed to access Google Sheet on line ${i+1} (${res.status}).`);
-          }
-          const csvText = await res.text();
-          const parsedData = parseCSVText(csvText, `GoogleSheet_${i+1}.csv`);
-          const detectedSheetDate = detectGlobalDateFromSheet(parsedData.rows, `GoogleSheet_${i+1}.csv`) || importDate;
-          
-          let items: FinancialItem[] = [];
-          if (parsedData.suggestedMapping?.nameCol && parsedData.suggestedMapping?.valueCol) {
-            items = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping, undefined, undefined, detectedSheetDate);
-          }
-          if (items.length === 0 && parsedData.headers.length >= 2) {
-            items = convertRowsToItems(parsedData.rows, {
-              nameCol: parsedData.headers[0],
-              valueCol: parsedData.headers[1],
-            }, undefined, undefined, detectedSheetDate);
-          }
-          
-          if (items.length === 0) {
-             throw new Error(`Could not automatically map columns for sheet ${i+1}. Please format with "Name" and "Value" headers.`);
-          }
-          
-          if (i === 0 && items[0]?.lastUpdated) {
-            primaryBatchDate = items[0].lastUpdated;
-          }
-          combinedItems = [...combinedItems, ...items];
-        }
-        
-        const importOptions: ImportOptions = {
-          mode: importMode,
-          importDate: primaryBatchDate,
-          portfolioName: portfolioTitle.trim() || `${urls.length}-Sheet Portfolio`,
-        };
-        
-        setPreviewData({
-          items: combinedItems,
-          options: importOptions,
-          sourceName: `${urls.length} Google Sheets`,
-        });
-      }
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Error fetching Google Sheet.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Handle raw text paste
   const handleProcessPaste = () => { 
     if (!pasteText.trim()) {
@@ -326,7 +293,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     setStatusMsg('Gemini AI analyzing spreadsheet structure...');
 
     try {
-      const userApiKey = localStorage.getItem('geminiApiKey') || '';
+      const provider = localStorage.getItem('aiProvider') || 'gemini';
+      const userApiKey = localStorage.getItem('aiApiKey') || localStorage.getItem('geminiApiKey') || '';
+      const baseUrl = localStorage.getItem('aiBaseUrl') || '';
+      const model = localStorage.getItem('aiModel') || '';
       let idToken = '';
       let isAnonymous = true;
 
@@ -348,6 +318,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         body: JSON.stringify({ 
           rawText: rawContent, 
           apiKey: userApiKey,
+          provider,
+          baseUrl,
+          model,
           idToken,
           isAnonymous
         }),
@@ -442,7 +415,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               <p className="text-xs text-slate-400">
                 {previewData
                   ? `Review parsed items from ${previewData.sourceName} before importing.`
-                  : 'Connect Google Sheets, Excel files, or CSV bank exports.'}
+                  : 'Import Excel files or CSV bank exports.'}
               </p>
             </div>
           </div>
@@ -523,21 +496,56 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             </div>
 
             {/* Items Table Preview */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
+            <div className="space-y-3">
+              {/* AI Categorized Success Banner */}
+              {aiCategorizedSuccessMsg && (
+                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-between text-xs text-purple-300 animate-fade-in">
+                  <div className="flex items-center gap-2 font-medium">
+                    <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                    <span>{aiCategorizedSuccessMsg}</span>
+                  </div>
+                  <button onClick={() => setAiCategorizedSuccessMsg(null)} className="text-purple-400 hover:text-white p-0.5">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <Table className="w-3.5 h-3.5 text-emerald-400" />
                   Parsed Financial Accounts ({previewData.items.length})
                 </span>
-                {previewData.parsedSheet && (
+                
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={handleOpenMapperFromPreview}
-                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold"
+                    type="button"
+                    onClick={handleSuggestCategoriesWithGemini}
+                    disabled={isCategorizingWithGemini}
+                    className="px-3 py-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    <Columns className="w-3.5 h-3.5" />
-                    Customize Column Mapping
+                    {isCategorizingWithGemini ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-200" />
+                        <span>Categorizing with Gemini AI...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                        <span>Auto-Categorize with Gemini AI</span>
+                      </>
+                    )}
                   </button>
-                )}
+
+                  {previewData.parsedSheet && (
+                    <button
+                      onClick={handleOpenMapperFromPreview}
+                      className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 font-semibold px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-xl"
+                    >
+                      <Columns className="w-3.5 h-3.5" />
+                      Customize Mapping
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="overflow-x-auto rounded-xl border border-slate-800 max-h-56 bg-slate-950">
@@ -552,27 +560,43 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {previewData.items.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-slate-900/50">
-                        <td className="p-2.5 text-slate-200 font-medium">{item.name}</td>
-                        <td className="p-2.5 text-slate-400">{item.category}</td>
-                        <td className="p-2.5 text-slate-400 font-mono text-[10px]">{item.lastUpdated || '-'}</td>
-                        <td className="p-2.5">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                            item.type === 'asset'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : item.type === 'liability'
-                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                          }`}>
-                            {item.type}
-                          </span>
-                        </td>
-                        <td className="p-2.5 text-right font-extrabold text-white">
-                          {formatCurrency(item.value, 'USD')}
-                        </td>
-                      </tr>
-                    ))}
+                    {previewData.items.map((item, idx) => {
+                      const aiMeta = aiItemReasons[item.id];
+                      return (
+                        <tr key={idx} className="hover:bg-slate-900/50">
+                          <td className="p-2.5 text-slate-200 font-medium">{item.name}</td>
+                          <td className="p-2.5 text-slate-300">
+                            <div className="flex items-center gap-1.5">
+                              <span>{item.category}</span>
+                              {aiMeta && (
+                                <span
+                                  title={aiMeta.reasoning || 'Categorized using Gemini AI'}
+                                  className="px-1.5 py-0.5 bg-purple-500/20 text-purple-300 text-[9px] font-bold rounded-md border border-purple-500/30 flex items-center gap-0.5 cursor-help"
+                                >
+                                  <Sparkles className="w-2.5 h-2.5 text-purple-300" />
+                                  AI
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-2.5 text-slate-400 font-mono text-[10px]">{item.lastUpdated || '-'}</td>
+                          <td className="p-2.5">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              item.type === 'asset'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : item.type === 'liability'
+                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            }`}>
+                              {item.type}
+                            </span>
+                          </td>
+                          <td className="p-2.5 text-right font-extrabold text-white">
+                            {formatCurrency(item.value, 'USD')}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -613,15 +637,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 Excel / CSV File
               </button>
               <button
-                onClick={() => { setActiveTab('googlesheets'); setErrorMsg(null); }}
-                className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
-                  activeTab === 'googlesheets' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
-                }`}
-              >
-                <Link className="w-4 h-4" />
-                Google Sheets Link
-              </button>
-              <button
                 onClick={() => { setActiveTab('paste'); setErrorMsg(null); }}
                 className={`flex-1 py-2.5 flex items-center justify-center gap-2 rounded-lg transition-colors ${
                   activeTab === 'paste' ? 'bg-slate-800 text-emerald-400 font-bold shadow-sm' : 'hover:text-slate-200'
@@ -659,39 +674,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 2: GOOGLE SHEETS LINK */}
-              {activeTab === 'googlesheets' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1">
-                      Paste Google Sheets Shareable Link(s)
-                    </label>
-                    <textarea
-                      rows={3}
-                      placeholder="https://docs.google.com/spreadsheets/d/.../edit&#10;(Optional: paste multiple links separated by commas or new lines)"
-                      value={gsUrl}
-                      onChange={(e) => setGsUrl(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                    />
-                    <p className="text-[11px] text-slate-400 mt-1.5 leading-normal">
-                      Make sure access is set to <span className="text-emerald-400 font-semibold">"Anyone with the link can view"</span> in Google Sheets sharing settings.
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleFetchGoogleSheet}
-                      disabled={isLoading}
-                      className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link className="w-4 h-4" />}
-                      Fetch & Parse Google Sheet
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: COPY-PASTE RAW TEXT */}
+              {/* TAB 2: COPY-PASTE RAW TEXT */}
               {activeTab === 'paste' && (
                 <div className="space-y-4">
                   <div>

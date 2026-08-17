@@ -9,7 +9,6 @@ import {
   AllocationChart, 
   ImportModal, 
   ColumnMapperModal, 
-  GoogleSheetsGuideModal, 
   AddItemModal, 
   ManageFilesModal, 
   SettingsModal, 
@@ -185,7 +184,6 @@ export default function App() {
   const [isColumnMapperOpen, setIsColumnMapperOpen] = useState<boolean>(false);
   const [parsedSheetForMapper, setParsedSheetForMapper] = useState<ParsedSheetData | null>(null);
   const [mapperImportOptions, setMapperImportOptions] = useState<ImportOptions | undefined>(undefined);
-  const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState<boolean>(false);
   const [isManageFilesOpen, setIsManageFilesOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -593,7 +591,6 @@ export default function App() {
     setIsManageFilesOpen(false);
     setIsImportModalOpen(false);
     setIsColumnMapperOpen(false);
-    setIsGuideModalOpen(false);
     setIsAddItemModalOpen(false);
     setIsAuthModalOpen(false);
     setIsPrivacyModalOpen(false);

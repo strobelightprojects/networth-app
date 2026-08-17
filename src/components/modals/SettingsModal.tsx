@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, Save, AlertCircle, Download, Printer, Sliders, FileSpreadsheet, Sun, Moon } from 'lucide-react';
+import { X, Key, Save, AlertCircle, Download, Printer, Sliders, FileSpreadsheet, Bot, Cpu } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -16,23 +16,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onPrint,
   onPreviewReport,
 }) => {
+  const [provider, setProvider] = useState<'gemini' | 'openai' | 'deepseek' | 'groq' | 'ollama' | 'custom'>('gemini');
   const [apiKey, setApiKey] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
+  const [model, setModel] = useState('');
   const [saved, setSaved] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     if (isOpen) {
-      const storedKey = localStorage.getItem('geminiApiKey');
-      if (storedKey) {
-        setApiKey(storedKey);
-      }
+      const storedProvider = (localStorage.getItem('aiProvider') as any) || 'gemini';
+      const storedKey = localStorage.getItem('aiApiKey') || localStorage.getItem('geminiApiKey') || '';
+      const storedUrl = localStorage.getItem('aiBaseUrl') || '';
+      const storedModel = localStorage.getItem('aiModel') || '';
+
+      setProvider(storedProvider);
+      setApiKey(storedKey);
+      setBaseUrl(storedUrl);
+      setModel(storedModel);
       setSaved(false);
     }
   }, [isOpen]);
 
   const handleSave = () => {
-    localStorage.setItem('geminiApiKey', apiKey.trim());
+    localStorage.setItem('aiProvider', provider);
+    localStorage.setItem('aiApiKey', apiKey.trim());
+    localStorage.setItem('geminiApiKey', apiKey.trim()); // Backwards compatibility
+    localStorage.setItem('aiBaseUrl', baseUrl.trim());
+    localStorage.setItem('aiModel', model.trim());
     setSaved(true);
     setTimeout(() => {
       onClose();
@@ -144,13 +156,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <div className="border-t border-slate-200 dark:border-slate-800/80 pt-5 space-y-4">
             <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <Key className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-              AI Parser Configuration
+              <Bot className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+              AI Model & Provider Configuration
             </h4>
 
-            <div className="space-y-2">
+            {/* Provider Select */}
+            <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
-                Gemini API Key (Optional)
+                Select AI Provider
+              </label>
+              <select
+                value={provider}
+                onChange={(e) => {
+                  setProvider(e.target.value as any);
+                  setSaved(false);
+                }}
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-purple-500 text-xs font-medium"
+              >
+                <option value="gemini">Google Gemini (Default)</option>
+                <option value="openai">OpenAI (ChatGPT / GPT-4o)</option>
+                <option value="deepseek">DeepSeek AI</option>
+                <option value="groq">Groq (Llama 3 / High Speed)</option>
+                <option value="ollama">Ollama / Local LLM</option>
+                <option value="custom">Custom OpenAI-Compatible Endpoint</option>
+              </select>
+            </div>
+
+            {/* API Key Input */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>
+                  API Key {provider === 'ollama' ? '(Optional for local LLM)' : <><span className="text-rose-400">*</span> (Required for AI features)</>}
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {provider === 'gemini' ? 'AIzaSy...' : provider === 'openai' ? 'sk-...' : 'Key'}
+                </span>
               </label>
               <div className="relative">
                 <input
@@ -160,19 +200,85 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     setApiKey(e.target.value);
                     setSaved(false);
                   }}
-                  placeholder="AIzaSy..."
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors font-mono text-xs"
+                  required={provider !== 'ollama'}
+                  placeholder={
+                    provider === 'gemini'
+                      ? 'AIzaSy... (Enter your Gemini API Key)'
+                      : provider === 'openai'
+                      ? 'sk-proj-... (Enter your OpenAI API Key)'
+                      : provider === 'deepseek'
+                      ? 'sk-... (Enter your DeepSeek API Key)'
+                      : provider === 'groq'
+                      ? 'gsk_... (Enter your Groq API Key)'
+                      : 'Enter your API Key'
+                  }
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors font-mono text-xs"
                 />
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Stored locally in your browser to power AI Smart Import parsing of custom bank statements and custom documents.
-              </p>
             </div>
 
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-emerald-900 dark:text-emerald-200/90 leading-relaxed">
-                An API key is required when using the AI Smart Import feature to extract items from unformatted files.
+            {/* Base URL (if Custom or Ollama or specified) */}
+            {(provider === 'custom' || provider === 'ollama' || provider === 'openai' || provider === 'deepseek' || provider === 'groq') && (
+              <div className="space-y-1.5 animate-fade-in">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
+                  API Base URL {provider !== 'custom' && provider !== 'ollama' ? '(Optional Override)' : ''}
+                </label>
+                <input
+                  type="text"
+                  value={baseUrl}
+                  onChange={(e) => {
+                    setBaseUrl(e.target.value);
+                    setSaved(false);
+                  }}
+                  placeholder={
+                    provider === 'openai'
+                      ? 'https://api.openai.com/v1'
+                      : provider === 'deepseek'
+                      ? 'https://api.deepseek.com/v1'
+                      : provider === 'groq'
+                      ? 'https://api.groq.com/openai/v1'
+                      : provider === 'ollama'
+                      ? 'http://localhost:11434/v1'
+                      : 'https://your-custom-ai-endpoint.com/v1'
+                  }
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-purple-500 transition-colors font-mono text-xs"
+                />
+              </div>
+            )}
+
+            {/* Model Name */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
+                Model Name (Optional Override)
+              </label>
+              <input
+                type="text"
+                value={model}
+                onChange={(e) => {
+                  setModel(e.target.value);
+                  setSaved(false);
+                }}
+                placeholder={
+                  provider === 'gemini'
+                    ? 'gemini-3.6-flash'
+                    : provider === 'openai'
+                    ? 'gpt-4o-mini'
+                    : provider === 'deepseek'
+                    ? 'deepseek-chat'
+                    : provider === 'groq'
+                    ? 'llama-3.3-70b-versatile'
+                    : provider === 'ollama'
+                    ? 'llama3'
+                    : 'gpt-4o'
+                }
+                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-purple-500 transition-colors font-mono text-xs"
+              />
+            </div>
+
+            <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3 flex items-start gap-2.5">
+              <Cpu className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-purple-900 dark:text-purple-200/90 leading-relaxed">
+                Connect any AI provider (Gemini, ChatGPT, DeepSeek, Groq, Ollama) to automatically categorize accounts and parse spreadsheet bank statements.
               </p>
             </div>
           </div>

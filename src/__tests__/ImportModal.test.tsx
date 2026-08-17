@@ -7,7 +7,6 @@ import '@testing-library/jest-dom';
 vi.mock('../utils/excelParser', () => ({
   parseExcelFile: vi.fn(),
   parseCSVText: vi.fn(),
-  parseGoogleSheetUrl: vi.fn(),
   convertRowsToItems: vi.fn(),
   extractDateFromFilename: vi.fn().mockReturnValue('2026-08-10'),
   detectGlobalDateFromSheet: vi.fn().mockReturnValue(null),
@@ -36,7 +35,6 @@ describe('ImportModal', () => {
     );
     expect(screen.getByText('Import Financial Data')).toBeInTheDocument();
     expect(screen.getByText('Excel / CSV File')).toBeInTheDocument();
-    expect(screen.getByText('Google Sheets Link')).toBeInTheDocument();
     expect(screen.getByText('Copy-Paste Text')).toBeInTheDocument();
   });
 
@@ -61,9 +59,6 @@ describe('ImportModal', () => {
         onOpenColumnMapper={handleOpenColumnMapper}
       />
     );
-
-    fireEvent.click(screen.getByText('Google Sheets Link'));
-    expect(screen.getByPlaceholderText(/https:\/\/docs\.google\.com/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Copy-Paste Text'));
     expect(screen.getByPlaceholderText(/Account Name/)).toBeInTheDocument();
@@ -228,89 +223,6 @@ describe('ImportModal', () => {
 
     await waitFor(() => {
       expect(handleImportBatch).toHaveBeenCalled();
-      expect(handleClose).toHaveBeenCalled();
-    });
-  });
-
-  it('shows error on empty Google Sheets fetch', async () => {
-    render(
-      <ImportModal
-        isOpen={true}
-        onClose={handleClose}
-        onImportItems={handleImportItems}
-        onOpenColumnMapper={handleOpenColumnMapper}
-      />
-    );
-
-    fireEvent.click(screen.getByText('Google Sheets Link'));
-    fireEvent.click(screen.getByText('Fetch & Parse Google Sheet'));
-
-    expect(await screen.findByText('Please enter Google Sheets URL(s)')).toBeInTheDocument();
-  });
-
-  it('shows error on invalid Google Sheets URL', async () => {
-    (excelParser.parseGoogleSheetUrl as any).mockReturnValue(null);
-
-    render(
-      <ImportModal
-        isOpen={true}
-        onClose={handleClose}
-        onImportItems={handleImportItems}
-        onOpenColumnMapper={handleOpenColumnMapper}
-      />
-    );
-
-    fireEvent.click(screen.getByText('Google Sheets Link'));
-    const textarea = screen.getByPlaceholderText(/https:\/\/docs\.google\.com/);
-    fireEvent.change(textarea, { target: { value: 'https://invalid-url.com' } });
-    fireEvent.click(screen.getByText('Fetch & Parse Google Sheet'));
-
-    expect(await screen.findByText(/Invalid Google Sheets URL/)).toBeInTheDocument();
-  });
-
-  it('handles Google Sheets fetch successfully', async () => {
-    (excelParser.parseGoogleSheetUrl as any).mockReturnValue({
-      csvUrl: 'https://docs.google.com/spreadsheets/d/123/export?format=csv'
-    });
-    const mockParsedData = {
-      fileName: 'GoogleSheet.csv',
-      sheetNames: ['CSV Data'],
-      activeSheetName: 'CSV Data',
-      headers: ['Name', 'Value'],
-      rows: [['Stocks', '10000']],
-      suggestedMapping: { nameCol: 'Name', valueCol: 'Value' }
-    };
-    (excelParser.parseCSVText as any).mockReturnValue(mockParsedData);
-    (excelParser.convertRowsToItems as any).mockReturnValue([
-      { id: '3', name: 'Stocks', value: 10000, type: 'asset', category: 'Stocks & ETFs' }
-    ]);
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      text: vi.fn().mockResolvedValue('Name,Value\nStocks,10000')
-    } as any);
-
-    render(
-      <ImportModal
-        isOpen={true}
-        onClose={handleClose}
-        onImportItems={handleImportItems}
-        onOpenColumnMapper={handleOpenColumnMapper}
-      />
-    );
-
-    fireEvent.click(screen.getByText('Google Sheets Link'));
-    const textarea = screen.getByPlaceholderText(/https:\/\/docs\.google\.com/);
-    fireEvent.change(textarea, { target: { value: 'https://docs.google.com/spreadsheets/d/123/edit' } });
-    fireEvent.click(screen.getByText('Fetch & Parse Google Sheet'));
-
-    await waitFor(() => {
-      expect(screen.getByText(/Confirm & Import/)).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText(/Confirm & Import/));
-
-    await waitFor(() => {
-      expect(handleImportItems).toHaveBeenCalled();
       expect(handleClose).toHaveBeenCalled();
     });
   });

@@ -3,6 +3,76 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
+async function executeOpenAICompatible({
+  apiKey,
+  provider,
+  baseUrl,
+  model,
+  prompt,
+}: {
+  apiKey: string;
+  provider?: string;
+  baseUrl?: string;
+  model?: string;
+  prompt: string;
+}) {
+  let targetUrl = baseUrl ? baseUrl.trim().replace(/\/+$/, '') : '';
+
+  if (!targetUrl) {
+    if (provider === 'deepseek') {
+      targetUrl = 'https://api.deepseek.com/v1';
+    } else if (provider === 'groq') {
+      targetUrl = 'https://api.groq.com/openai/v1';
+    } else if (provider === 'ollama') {
+      targetUrl = 'http://localhost:11434/v1';
+    } else {
+      targetUrl = 'https://api.openai.com/v1';
+    }
+  }
+
+  if (!targetUrl.endsWith('/chat/completions')) {
+    targetUrl = targetUrl + '/chat/completions';
+  }
+
+  let defaultModel = 'gpt-4o-mini';
+  if (provider === 'deepseek') defaultModel = 'deepseek-chat';
+  else if (provider === 'groq') defaultModel = 'llama-3.3-70b-versatile';
+  else if (provider === 'ollama') defaultModel = 'llama3';
+
+  const targetModel = (model && model.trim()) || defaultModel;
+
+  const response = await fetch(targetUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      model: targetModel,
+      messages: [
+        { role: 'system', content: 'You are a helpful financial AI assistant. Respond strictly in valid raw JSON.' },
+        { role: 'user', content: prompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '');
+    throw new Error(`AI Provider API request failed (${response.status}): ${errorText || response.statusText}`);
+  }
+
+  const data = await response.json();
+  const rawContent = data.choices?.[0]?.message?.content;
+  if (!rawContent) {
+    throw new Error('No response returned from AI provider.');
+  }
+
+  const cleaned = rawContent.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+  return JSON.parse(cleaned);
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -13,40 +83,6 @@ async function startServer() {
   // API Health check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
-
-  // Proxy endpoint to fetch Google Sheets CSV directly (bypassing browser CORS)
-  app.get('/api/fetch-google-sheet', async (req, res) => {
-    try {
-      const url = req.query.url as string;
-      if (!url) {
-        return res.status(400).json({ error: 'URL query parameter is required' });
-      }
-
-      // Ensure it's a valid http or https URL
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        return res.status(400).json({ error: 'Invalid URL scheme' });
-      }
-
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NetWorthTracker/1.0',
-        },
-      });
-
-      if (!response.ok) {
-        return res.status(response.status).json({
-          error: `Failed to fetch Google Sheet: ${response.statusText}`,
-        });
-      }
-
-      const csvData = await response.text();
-      res.setHeader('Content-Type', 'text/csv');
-      res.send(csvData);
-    } catch (err: any) {
-      console.error('Error fetching Google Sheet:', err);
-      res.status(500).json({ error: err?.message || 'Server error fetching sheet' });
-    }
   });
 
   // Real-Time Exchange Rate API Proxy
@@ -119,13 +155,21 @@ async function startServer() {
 
   app.post('/api/parse-spreadsheet', async (req, res) => {
     try {
-      const { rawText, headers, sampleRows, apiKey: userApiKey } = req.body;
+      const { rawText, headers, sampleRows, apiKey: userApiKey, provider: reqProvider, baseUrl: reqBaseUrl, model: reqModel } = req.body;
       const apiKey = userApiKey || process.env.GEMINI_API_KEY;
       
-      if (!apiKey) {
+      if (!apiKey && reqProvider !== 'ollama') {
         return res.status(401).json({
-          error: 'Gemini API key is required. Please provide it in settings.',
+          error: 'AI API Key is required. Please enter your API Key in Settings to use AI features.',
         });
+      }
+
+      if (!userApiKey && reqProvider !== 'ollama') {
+        if (!process.env.GEMINI_API_KEY) {
+          return res.status(401).json({
+            error: 'AI API Key is required. Please enter your API Key in Settings to use AI features.',
+          });
+        }
       }
 
       // Enforce signed-in account requirement and rate limit if using shared server API key
@@ -181,8 +225,6 @@ async function startServer() {
         return res.status(400).json({ error: 'Please provide rawText or headers and sampleRows' });
       }
 
-      const ai = new GoogleGenAI({ apiKey });
-
       const prompt = `You are an expert financial analyst AI. You are given table data or text extracted from a financial spreadsheet, Google Sheet, or bank statement.
 Analyze this raw data and extract all financial asset and liability items into a structured JSON array of items.
 
@@ -225,7 +267,38 @@ Respond STRICTLY with valid JSON in this exact structure without markdown format
   ]
 }`;
 
-      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      // Check if user is using an OpenAI-compatible provider (OpenAI, DeepSeek, Groq, Ollama, Custom API, or sk- key)
+      const isCustomProvider =
+        reqProvider === 'openai' ||
+        reqProvider === 'deepseek' ||
+        reqProvider === 'groq' ||
+        reqProvider === 'ollama' ||
+        reqProvider === 'custom' ||
+        (reqBaseUrl && reqBaseUrl.trim().length > 0) ||
+        (userApiKey && userApiKey.startsWith('sk-'));
+
+      if (isCustomProvider) {
+        const parsedJSON = await executeOpenAICompatible({
+          apiKey: apiKey,
+          provider: reqProvider,
+          baseUrl: reqBaseUrl,
+          model: reqModel,
+          prompt,
+        });
+        return res.json(parsedJSON);
+      }
+
+      // Default Gemini Provider
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          },
+        },
+      });
+
+      const modelsToTry = reqModel ? [reqModel, 'gemini-3.6-flash', 'gemini-3.1-pro-preview'] : ['gemini-3.6-flash', 'gemini-3.1-pro-preview'];
       let response = null;
       let lastErr = null;
 
@@ -254,8 +327,176 @@ Respond STRICTLY with valid JSON in this exact structure without markdown format
 
       res.json(parsedJSON);
     } catch (err: any) {
-      console.error('Gemini API parse error:', err);
+      console.error('AI parse-statement error:', err);
       res.status(500).json({ error: err?.message || 'Failed to process spreadsheet with AI' });
+    }
+  });
+
+  // Dedicated AI Category Suggester using Gemini or custom OpenAI-compatible API
+  app.post('/api/suggest-categories', async (req, res) => {
+    try {
+      const { items, apiKey: userApiKey, provider: reqProvider, baseUrl: reqBaseUrl, model: reqModel } = req.body;
+      const apiKey = userApiKey || process.env.GEMINI_API_KEY;
+
+      if (!apiKey && reqProvider !== 'ollama') {
+        return res.status(401).json({
+          error: 'AI API Key is required. Please enter your API Key in Settings to use AI features.',
+        });
+      }
+
+      if (!userApiKey && reqProvider !== 'ollama') {
+        if (!process.env.GEMINI_API_KEY) {
+          return res.status(401).json({
+            error: 'AI API Key is required. Please enter your API Key in Settings to use AI features.',
+          });
+        }
+      }
+
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'Please provide an array of items to categorize.' });
+      }
+
+      // Enforce auth requirement and rate limiting for shared server API key
+      if (!userApiKey) {
+        const authHeader = req.headers.authorization;
+        const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : req.body.idToken;
+
+        let isAuthenticatedUser = false;
+        if (token) {
+          try {
+            const parts = token.split('.');
+            if (parts.length === 3) {
+              const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+              const nowSec = Math.floor(Date.now() / 1000);
+              const isNotExpired = payload.exp && payload.exp > nowSec;
+              const provider = payload.firebase?.sign_in_provider;
+              const isAnon = provider === 'anonymous' || req.body.isAnonymous === true;
+
+              if (isNotExpired && provider && !isAnon) {
+                isAuthenticatedUser = true;
+              }
+            }
+          } catch (err) {
+            console.error('Error verifying auth token for suggest-categories:', err);
+          }
+        }
+
+        if (!isAuthenticatedUser) {
+          return res.status(401).json({
+            error: 'Account sign-in required to use default Gemini AI features. Please sign in or provide your custom AI API key in Settings.',
+          });
+        }
+      }
+
+      const prompt = `You are a financial classification AI. You are given a list of account/holding/debt names.
+Analyze each item name and determine its exact classification:
+
+Available Asset Categories:
+- "Cash & Equivalents" (checking, savings, bank accounts, HYSA, money market, cash, PayPal, Venmo, Revolut)
+- "Stocks & ETFs" (brokerage accounts, index funds, equities, stock portfolios, Vanguard, Schwab, Fidelity)
+- "Real Estate" (primary residence, rental property, house, condo, land, commercial real estate)
+- "Retirement (401k/IRA)" (401k, 403b, Roth IRA, Traditional IRA, pension, TSP, superannuation)
+- "Crypto" (Bitcoin, Ethereum, crypto wallets, Coinbase, Binance, digital assets)
+- "Precious Metals" (gold bullion, silver coins, physical metals, platinum)
+- "Bonds & Fixed Income" (treasury bonds, t-bills, municipal bonds, corporate bonds, CDs)
+- "Alternative & Private" (startup equity, private equity, venture capital, hedge fund, angel investments)
+- "Vehicle & Physical" (automobiles, cars, Tesla, boats, luxury watches, jewelry, physical collectibles)
+
+Available Liability Categories:
+- "Mortgage" (home loan, housing mortgage, property loan)
+- "Credit Cards" (Visa, Mastercard, Amex, credit card balances, Chase Freedom, Sapphire)
+- "Student Loans" (Nelnet, Aidvantage, Navient, MOHELA, university tuition debt)
+- "Auto Loans" (car loan, vehicle financing, Honda Financial, Ford Credit)
+- "Personal Loans" (SoFi loan, personal line of credit, debt consolidation loan, HELOC)
+- "Other Liabilities" (tax debt, medical bills, loans payable)
+
+Available Insurance Categories:
+- "Term Life Insurance" (term life policy coverage/death benefit)
+- "Whole Life Insurance" (whole life cash value / death benefit)
+- "Universal Life Insurance" (universal life insurance)
+- "Disability Insurance" (short-term / long-term disability)
+- "Health & Long-Term Care" (health insurance, long-term care policy)
+- "Property & Umbrella" (homeowners policy, umbrella insurance)
+
+Input Items:
+${JSON.stringify(items.slice(0, 100), null, 2)}
+
+Return a JSON object containing a "suggestions" array with one object per input item:
+{
+  "suggestions": [
+    {
+      "index": 0,
+      "name": "Item Name",
+      "suggestedType": "asset" | "liability" | "insurance",
+      "suggestedCategory": "Exact Category Name from above lists",
+      "confidence": "high" | "medium" | "low",
+      "reasoning": "Short 1-sentence concise explanation of why this category fits this account name"
+    }
+  ]
+}`;
+
+      // Check if user specified a custom AI provider (OpenAI, DeepSeek, Groq, Ollama, etc.)
+      const isCustomProvider =
+        reqProvider === 'openai' ||
+        reqProvider === 'deepseek' ||
+        reqProvider === 'groq' ||
+        reqProvider === 'ollama' ||
+        reqProvider === 'custom' ||
+        (reqBaseUrl && reqBaseUrl.trim().length > 0) ||
+        (userApiKey && userApiKey.startsWith('sk-'));
+
+      if (isCustomProvider) {
+        const parsedJSON = await executeOpenAICompatible({
+          apiKey: apiKey,
+          provider: reqProvider,
+          baseUrl: reqBaseUrl,
+          model: reqModel,
+          prompt,
+        });
+        return res.json(parsedJSON);
+      }
+
+      // Gemini API
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          },
+        },
+      });
+
+      const modelsToTry = reqModel ? [reqModel, 'gemini-3.6-flash', 'gemini-3.1-pro-preview'] : ['gemini-3.6-flash', 'gemini-3.1-pro-preview'];
+      let response = null;
+      let lastErr = null;
+
+      for (const m of modelsToTry) {
+        try {
+          response = await ai.models.generateContent({
+            model: m,
+            contents: prompt,
+            config: {
+              responseMimeType: 'application/json',
+              temperature: 0.1,
+            },
+          });
+          if (response && response.text) break;
+        } catch (e: any) {
+          lastErr = e;
+        }
+      }
+
+      if (!response || !response.text) {
+        throw lastErr || new Error('No available Gemini model responded.');
+      }
+
+      const jsonText = response.text || '{}';
+      const parsedJSON = JSON.parse(jsonText);
+
+      res.json(parsedJSON);
+    } catch (err: any) {
+      console.error('AI suggest-categories error:', err);
+      res.status(500).json({ error: err?.message || 'Failed to suggest categories with AI' });
     }
   });
 
