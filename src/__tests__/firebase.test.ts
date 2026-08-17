@@ -1,12 +1,52 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { 
   compressHistoryData, 
   isAccountInactiveOneYear, 
-  calculateStorageEstimate 
+  calculateStorageEstimate,
+  deleteUserAccountAndData
 } from '../lib/firebase';
 import { PortfolioData } from '../types';
 
+vi.mock('firebase/app', () => ({
+  initializeApp: vi.fn(),
+}));
+
+vi.mock('firebase/auth', () => ({
+  getAuth: vi.fn(),
+  GoogleAuthProvider: vi.fn(),
+  signInWithPopup: vi.fn(),
+  signInAnonymously: vi.fn(),
+  signOut: vi.fn(),
+  onAuthStateChanged: vi.fn(),
+  signInWithEmailAndPassword: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  deleteUser: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('firebase/firestore', () => ({
+  getFirestore: vi.fn(),
+  doc: vi.fn().mockReturnValue({}),
+  setDoc: vi.fn(),
+  getDoc: vi.fn(),
+  getDocs: vi.fn().mockResolvedValue({
+    docs: [
+      { ref: {} },
+      { ref: {} }
+    ]
+  }),
+  collection: vi.fn().mockReturnValue({}),
+  deleteDoc: vi.fn().mockResolvedValue(undefined),
+  onSnapshot: vi.fn(),
+}));
+
+import { deleteUser } from 'firebase/auth';
+import { deleteDoc, getDocs } from 'firebase/firestore';
+
 describe('Firebase Utility & Storage Optimization Tests', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('correctly calculates storage footprint estimate for portfolios', () => {
     const mockPortfolios: PortfolioData[] = [
       {
@@ -67,5 +107,15 @@ describe('Firebase Utility & Storage Optimization Tests', () => {
     const compressed = compressHistoryData(mockHistory);
     // 15 daily points across ~2+ weeks should compress into ~3 weekly bucket points
     expect(compressed.length).toBeLessThan(mockHistory.length);
+  });
+
+  it('securely deletes user account and all firestore data', async () => {
+    const mockUser: any = { uid: 'user-123' };
+    
+    await deleteUserAccountAndData(mockUser);
+    
+    expect(getDocs).toHaveBeenCalled(); // Fetching portfolios
+    expect(deleteDoc).toHaveBeenCalledTimes(3); // 2 portfolio docs + 1 user profile doc
+    expect(deleteUser).toHaveBeenCalledWith(mockUser); // Firebase Auth deletion
   });
 });
