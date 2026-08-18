@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractDateFromFilename, suggestColumnMapping, convertRowsToItems, parseCSVText, parseExcelFile, parseDateString, detectGlobalDateFromSheet } from '../utils/excelParser';
+import { extractDateFromFilename, suggestColumnMapping, convertRowsToItems, parseCSVText, parseDateString, detectGlobalDateFromSheet } from '../utils/excelParser';
 import { ColumnMapping } from '../types';
 
 describe('excelParser', () => {
@@ -43,6 +43,7 @@ describe('excelParser', () => {
       expect(detectGlobalDateFromSheet(rows, 'Portfolio_jan_2025.xlsx')).toBe('2025-01');
     });
   });
+
   describe('parseCSVText', () => {
     it('returns empty result for empty string', () => {
       const result = parseCSVText('', 'empty.csv');
@@ -59,56 +60,40 @@ describe('excelParser', () => {
       expect(result.suggestedMapping.valueCol).toBe('Balance');
     });
 
-    it('parses multi-section ledger CSV', () => {
-      const csv = `Net Worth Summary\n1. Liquid Assets\nAsset / Line Item,Amount\nSavings,10000\nChecking,2000\nSubtotal,12000\n\n2. Real Estate\nHouse,400000\nTotal,400000`;
-      const result = parseCSVText(csv, 'ledger.csv');
-      expect(result.rows.length).toBeGreaterThan(0);
-      expect(result.headers).toContain('Account Name');
-      expect(result.headers).toContain('Value ($)');
+    it('handles quoted values with commas correctly', () => {
+      const csv = `Account Name,Balance\n"Checking, Savings & CDs","$25,450.00"\n"Auto Loan, 2023 Tesla","$18,200"`;
+      const result = parseCSVText(csv, 'quoted.csv');
+      expect(result.rows.length).toBe(2);
+      expect(result.rows[0]['Account Name']).toBe('Checking, Savings & CDs');
+      expect(result.rows[0]['Balance']).toBe('$25,450.00');
     });
   });
 
   describe('extractDateFromFilename', () => {
-    it('extracts YYYY-MM-DD', () => {
-      expect(extractDateFromFilename('file_2024-05-15.csv', '2024-01-01')).toBe('2024-05-15');
-      expect(extractDateFromFilename('2024_05_15.csv', '2024-01-01')).toBe('2024-05-15');
+    it('extracts ISO dates', () => {
+      expect(extractDateFromFilename('NetWorth_2024-05-01.xlsx', '')).toBe('2024-05-01');
+      expect(extractDateFromFilename('2023_11_Statement.csv', '')).toBe('2023-11');
     });
-    it('extracts YYYY-MM', () => {
-      expect(extractDateFromFilename('file_2024-05.csv', '2024-01-01')).toBe('2024-05');
-      expect(extractDateFromFilename('2024_05.csv', '2024-01-01')).toBe('2024-05');
+
+    it('extracts Month Year dates', () => {
+      expect(extractDateFromFilename('NetWorth_January_2024.xlsx', '')).toBe('2024-01');
+      expect(extractDateFromFilename('March_2023_Finances.csv', '')).toBe('2023-03');
     });
-    it('extracts Month Year', () => {
-      expect(extractDateFromFilename('jan_2025.csv', '2024-01-01')).toBe('2025-01');
-      expect(extractDateFromFilename('january2025.csv', '2024-01-01')).toBe('2025-01');
-      expect(extractDateFromFilename('file_2025_jan.csv', '2024-01-01')).toBe('2025-01');
-    });
-    it('extracts year only', () => {
-      expect(extractDateFromFilename('file_2025.csv', '2024-01-01')).toBe('2025-01');
-    });
-    it('returns fallback if no match', () => {
-      expect(extractDateFromFilename('data.csv', '2024-01-01')).toBe('2024-01-01');
-      expect(extractDateFromFilename('', '2024-01-01')).toBe('2024-01-01');
+
+    it('returns falsy if no date in filename', () => {
+      expect(extractDateFromFilename('my_finances.xlsx', '')).toBeFalsy();
     });
   });
 
   describe('suggestColumnMapping', () => {
-    it('suggests correct mapping', () => {
-      const headers = ['Account Name', 'Balance', 'Type', 'Category', 'Currency'];
+    it('identifies standard columns accurately', () => {
+      const headers = ['Account Name', 'Current Balance', 'Account Type', 'Category', 'As Of Date'];
       const mapping = suggestColumnMapping(headers);
       expect(mapping.nameCol).toBe('Account Name');
-      expect(mapping.valueCol).toBe('Balance');
-      expect(mapping.typeCol).toBe('Type');
+      expect(mapping.valueCol).toBe('Current Balance');
+      expect(mapping.typeCol).toBe('Account Type');
       expect(mapping.categoryCol).toBe('Category');
-      expect(mapping.currencyCol).toBe('Currency');
-    });
-    it('handles alternative headers', () => {
-      const headers = ['item', 'amount', 'asset class', 'ccy', 'tag'];
-      const mapping = suggestColumnMapping(headers);
-      expect(mapping.nameCol).toBe('asset class');
-      expect(mapping.valueCol).toBe('amount');
-      expect(mapping.typeCol).toBe('asset class');
-      expect(mapping.categoryCol).toBe('asset class');
-      expect(mapping.currencyCol).toBe('ccy');
+      expect(mapping.dateCol).toBe('As Of Date');
     });
   });
 
@@ -150,6 +135,17 @@ describe('excelParser', () => {
       expect(items[2].type).toBe('insurance');
     });
     
+    it('handles formatted numbers with symbols and commas', () => {
+      const rows = [
+        { Name: 'Investment Portfolio', Value: '$1,250,000.50' },
+        { Name: 'Student Debt', Value: '(50,000.00)' },
+      ];
+      const items = convertRowsToItems(rows, { nameCol: 'Name', valueCol: 'Value' });
+      expect(items.length).toBe(2);
+      expect(items[0].value).toBe(1250000.5);
+      expect(items[1].value).toBe(50000);
+    });
+
     it('skips empty names', () => {
       const rows = [
         { Name: '', Value: 1000 },

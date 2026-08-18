@@ -195,7 +195,14 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
       </div>
 
       {/* Main Chart Area */}
-      <div className="h-[320px] w-full">
+      <div className="h-[320px] w-full relative">
+        {chartData.length === 0 ? (
+           <div className="absolute inset-0 flex items-center justify-center bg-slate-50/50 dark:bg-slate-900/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+             <div className="text-center">
+               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Log data to visualize trend</p>
+             </div>
+           </div>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           {chartMode === 'networth' ? (
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
@@ -283,9 +290,9 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                           {label}
                         </div>
                         <div className="space-y-1">
-                          <div className="text-blue-600 dark:text-blue-400 font-semibold">Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
-                          <div className="text-rose-600 dark:text-rose-400 font-semibold">Total Liabilities: {formatCurrency(data.totalLiabilities, currency)}</div>
-                          <div className="text-emerald-600 dark:text-emerald-400 font-bold border-t border-slate-200 dark:border-slate-800 pt-1 mt-1">
+                          <div className={`text-blue-600 dark:text-blue-400 font-semibold ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
+                          <div className={`text-rose-600 dark:text-rose-400 font-semibold ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>Total Liabilities: {formatCurrency(data.totalLiabilities, currency)}</div>
+                          <div className={`text-emerald-600 dark:text-emerald-400 font-bold border-t border-slate-200 dark:border-slate-800 pt-1 mt-1 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
                             Net Worth: {formatCurrency(data.netWorth, currency)}
                           </div>
                         </div>
@@ -317,6 +324,7 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
             </AreaChart>
           )}
         </ResponsiveContainer>
+        )}
       </div>
 
     </div>

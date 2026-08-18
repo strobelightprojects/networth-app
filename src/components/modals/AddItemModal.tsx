@@ -407,20 +407,38 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
             )}
           </div>
 
-          {/* Balance Amount */}
-          <div>
-            <label className="block font-bold text-slate-300 mb-1">
-              {type === 'insurance' ? 'Policy Death Benefit / Coverage Amount' : 'Balance Amount'} ({getCurrencySymbol(baseCurrency)}) <span className="text-rose-400">*</span>
-            </label>
-            <input
-              type="number"
-              step="any"
-              required
-              placeholder="0.00"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm font-bold placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-            />
+          {/* Balance Amount and Currency */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-bold text-slate-300 mb-1">
+                {type === 'insurance' ? 'Coverage Amount' : 'Balance Amount'} <span className="text-rose-400">*</span>
+              </label>
+              <input
+                type="number"
+                step="any"
+                required
+                placeholder="0.00"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm font-bold placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-300 mb-1">
+                Currency
+              </label>
+              <select
+                value={itemCurrency}
+                onChange={(e) => setItemCurrency(e.target.value)}
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm font-bold focus:outline-none focus:border-emerald-500"
+              >
+                {CURRENCY_LIST.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} ({c.symbol})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Real-Time FX Live Conversion Preview Box */}

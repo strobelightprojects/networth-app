@@ -52,6 +52,83 @@ describe('Header', () => {
     const onOpenAddItemModal = vi.fn();
     const onOpenSettingsModal = vi.fn();
     const onToggleTheme = vi.fn();
+    const onSelectPortfolio = vi.fn();
+    const onOpenManageFilesModal = vi.fn();
+    const onDeleteCurrentPortfolio = vi.fn();
+    const onOpenAuthModal = vi.fn();
+    const onOpenPrivacyModal = vi.fn();
+
+    render(
+      <Header
+        portfolio={mockPortfolio}
+        portfoliosList={mockPortfolioList}
+        selectedPortfolioId="1"
+        onSelectPortfolio={onSelectPortfolio}
+        onOpenManageFilesModal={onOpenManageFilesModal}
+        onDeleteCurrentPortfolio={onDeleteCurrentPortfolio}
+        onOpenImportModal={onOpenImportModal}
+        onOpenGuideModal={vi.fn()}
+        onOpenAddItemModal={onOpenAddItemModal}
+        onOpenSettingsModal={onOpenSettingsModal}
+        onOpenAuthModal={onOpenAuthModal}
+        onOpenPrivacyModal={onOpenPrivacyModal}
+        onExportCSV={vi.fn()}
+        onPrint={vi.fn()}
+        currency="USD"
+        onChangeCurrency={vi.fn()}
+        currentUser={null}
+        theme="dark"
+        onToggleTheme={onToggleTheme}
+      />
+    );
+
+    // Import Button
+    const importBtn = screen.getByText('Import Data');
+    fireEvent.click(importBtn);
+    expect(onOpenImportModal).toHaveBeenCalled();
+
+    // Add Account Button
+    const addAccountBtn = screen.getByText('Add Item');
+    fireEvent.click(addAccountBtn);
+    expect(onOpenAddItemModal).toHaveBeenCalled();
+
+    // Settings Button
+    const settingsBtn = screen.getByTitle('App Settings');
+    fireEvent.click(settingsBtn);
+    expect(onOpenSettingsModal).toHaveBeenCalled();
+    
+    // Privacy Button
+    const privacyBtn = screen.getByTitle('Privacy Policy & Terms');
+    fireEvent.click(privacyBtn);
+    expect(onOpenPrivacyModal).toHaveBeenCalled();
+    
+    // Sign In Button
+    const signInBtn = screen.getByTitle('Account & Cloud Storage');
+    fireEvent.click(signInBtn);
+    expect(onOpenAuthModal).toHaveBeenCalled();
+
+    // Manage Files Button
+    const manageFilesBtn = screen.getByTitle('Manage & Remove Portfolio Files');
+    fireEvent.click(manageFilesBtn);
+    expect(onOpenManageFilesModal).toHaveBeenCalled();
+    
+    // Delete File Button
+    const deleteBtn = screen.getByTitle('Remove file "Primary Household Portfolio"');
+    fireEvent.click(deleteBtn);
+    expect(onDeleteCurrentPortfolio).toHaveBeenCalled();
+    
+    // Select dropdown
+    const select = screen.getByRole('combobox');
+    fireEvent.change(select, { target: { value: '2' } });
+    expect(onSelectPortfolio).toHaveBeenCalledWith('2');
+  });
+  
+  it('toggles mobile menu and handles mobile actions', () => {
+    const onOpenImportModal = vi.fn();
+    const onOpenAuthModal = vi.fn();
+    const onOpenSettingsModal = vi.fn();
+    const onOpenPrivacyModal = vi.fn();
+    const onOpenAddItemModal = vi.fn();
 
     render(
       <Header
@@ -65,33 +142,45 @@ describe('Header', () => {
         onOpenGuideModal={vi.fn()}
         onOpenAddItemModal={onOpenAddItemModal}
         onOpenSettingsModal={onOpenSettingsModal}
-        onOpenAuthModal={vi.fn()}
-        onOpenPrivacyModal={vi.fn()}
+        onOpenAuthModal={onOpenAuthModal}
+        onOpenPrivacyModal={onOpenPrivacyModal}
         onExportCSV={vi.fn()}
         onPrint={vi.fn()}
         currency="USD"
         onChangeCurrency={vi.fn()}
-        currentUser={null}
-        theme="dark"
-        onToggleTheme={onToggleTheme}
+        currentUser={{ email: 'test@example.com' } as any}
+        theme="light"
       />
     );
 
-    // Import Button
-    const importBtn = screen.getByText('Import Sheet');
-    fireEvent.click(importBtn);
-    expect(onOpenImportModal).toHaveBeenCalled();
-
-    // Add Account Button
-    const addAccountBtn = screen.getByText('Add Item');
-    fireEvent.click(addAccountBtn);
+    // Check quick add item on mobile
+    const mobileAddBtn = screen.getByTitle('Add Item');
+    fireEvent.click(mobileAddBtn);
     expect(onOpenAddItemModal).toHaveBeenCalled();
-
-    // Settings Button
-    const settingsBtn = screen.getByTitle('App Settings');
-    fireEvent.click(settingsBtn);
+    
+    // Toggle Menu
+    const toggleBtn = screen.getByLabelText('Toggle mobile menu');
+    fireEvent.click(toggleBtn);
+    
+    // Mobile buttons are now visible
+    const mobileImportBtn = screen.getAllByText('Import Data')[1]; // Desktop + Mobile
+    fireEvent.click(mobileImportBtn);
+    expect(onOpenImportModal).toHaveBeenCalled();
+    
+    fireEvent.click(toggleBtn); // Re-open
+    const mobileAccountBtn = screen.getByText('Account Active');
+    fireEvent.click(mobileAccountBtn);
+    expect(onOpenAuthModal).toHaveBeenCalled();
+    
+    fireEvent.click(toggleBtn); // Re-open
+    const mobileSettingsBtn = screen.getByText('Settings & Export');
+    fireEvent.click(mobileSettingsBtn);
     expect(onOpenSettingsModal).toHaveBeenCalled();
-
+    
+    fireEvent.click(toggleBtn); // Re-open
+    const mobilePrivacyBtn = screen.getByText('Privacy & Security Policy');
+    fireEvent.click(mobilePrivacyBtn);
+    expect(onOpenPrivacyModal).toHaveBeenCalled();
   });
 });
 

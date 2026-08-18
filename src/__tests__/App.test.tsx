@@ -45,6 +45,86 @@ describe('App', () => {
     fireEvent.click(screen.getByTitle('App Settings'));
     expect(screen.getByText('App & Preferences Settings')).toBeDefined();
     // close
-    fireEvent.click(screen.getAllByRole('button', { name: '' }).find(b => b.querySelector('svg.lucide-x')));
+    const closeBtns = document.querySelectorAll('button');
+    const closeBtn = Array.from(closeBtns).find(btn => btn.querySelector('.lucide-x'));
+    if (closeBtn) fireEvent.click(closeBtn);
+  });
+
+  it('can open the Import Data modal', async () => {
+    render(<App />);
+    
+    // Find and click the desktop Import Data button
+    const importButtons = screen.getAllByText('Import Data');
+    fireEvent.click(importButtons[0]);
+    
+    // Assert the modal opens
+    expect(screen.getByText('Import Financial Data')).toBeDefined();
+    
+    // Close the modal
+    const closeBtns = document.querySelectorAll('button');
+    const closeBtn = Array.from(closeBtns).find(btn => btn.querySelector('.lucide-x'));
+    if (closeBtn) fireEvent.click(closeBtn);
+  });
+  
+  it('can open the Privacy Policy modal', async () => {
+    render(<App />);
+    
+    const shieldBtn = screen.getByTitle('Privacy Policy & Terms');
+    fireEvent.click(shieldBtn);
+    
+    expect(screen.getByText('Privacy Policy & Terms of Service')).toBeDefined();
+    
+    // Close the modal
+    const closeBtns = document.querySelectorAll('button');
+    const closeBtn = Array.from(closeBtns).find(btn => btn.querySelector('.lucide-x'));
+    if (closeBtn) fireEvent.click(closeBtn);
+  });
+  
+  it('can add a new item and update state', async () => {
+    render(<App />);
+    
+    // Open Add Item Modal
+    fireEvent.click(screen.getAllByText('Add Item')[0]);
+    
+    // Fill out form
+    const nameInput = screen.getByPlaceholderText('e.g. Vanguard 401k, Primary Home, Tesla');
+    fireEvent.change(nameInput, { target: { value: 'Test Bank Account' } });
+    
+    const valueInput = screen.getByPlaceholderText('0.00');
+    fireEvent.change(valueInput, { target: { value: '12345' } });
+    
+    // Submit
+    const submitBtn = screen.getByText('Save Account');
+    fireEvent.click(submitBtn);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Test Bank Account')).toBeDefined();
+      expect(screen.getAllByText(/12,345/).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('can delete an item', async () => {
+    render(<App />);
+    
+    // Add item first
+    fireEvent.click(screen.getAllByText('Add Item')[0]);
+    fireEvent.change(screen.getByPlaceholderText('e.g. Vanguard 401k, Primary Home, Tesla'), { target: { value: 'Item To Delete' } });
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '9999' } });
+    fireEvent.click(screen.getByText('Save Account'));
+    
+    await waitFor(() => {
+      expect(screen.getByText('Item To Delete')).toBeDefined();
+    });
+
+    const itemSpan = screen.getByText('Item To Delete');
+    const row = itemSpan.closest('.group') || itemSpan.closest('tr') || itemSpan.parentElement?.parentElement;
+    const delBtn = row?.querySelector('button[title*="Delete"]') as HTMLButtonElement | null;
+    if (delBtn) {
+      fireEvent.click(delBtn);
+    }
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Item To Delete')).toBeNull();
+    });
   });
 });

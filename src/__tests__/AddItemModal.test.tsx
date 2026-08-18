@@ -123,7 +123,7 @@ describe('AddItemModal', () => {
       />
     );
 
-    const categorySelect = screen.getByRole('combobox');
+    const categorySelect = screen.getAllByRole('combobox')[0];
     fireEvent.change(categorySelect, { target: { value: 'custom_category' } });
 
     const customCatInput = screen.getByPlaceholderText(/Rare Collectibles/);
@@ -139,6 +139,38 @@ describe('AddItemModal', () => {
         name: 'Picasso Painting',
         category: 'Art & Antiques',
         value: 45000,
+      })
+    );
+  });
+
+  it('supports foreign currency selection and exclusion toggling', async () => {
+    const onAddItem = vi.fn();
+    render(
+      <AddItemModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onAddItem={onAddItem}
+        baseCurrency="USD"
+      />
+    );
+
+    // Enter name
+    fireEvent.change(screen.getByPlaceholderText(/Vanguard 401k/), { target: { value: 'London Flat' } });
+    
+    // Change currency
+    const currencySelects = screen.getAllByRole('combobox');
+    fireEvent.change(currencySelects[1], { target: { value: 'GBP' } });
+    
+    // Set value
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '500000' } });
+
+    fireEvent.click(screen.getByText('Save Account'));
+
+    expect(onAddItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'London Flat',
+        currency: 'GBP',
+        originalValue: 500000,
       })
     );
   });

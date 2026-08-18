@@ -47,4 +47,27 @@ describe('KPICards component', () => {
     // July Net Worth = 45000, August = 60000 => change = +15000 (+33.3%)
     expect(screen.getByText('+33.3%')).toBeInTheDocument();
   });
+  
+  it('applies privacy blur class when isPrivacyBlur is true', () => {
+    const { container } = render(<KPICards portfolio={mockPortfolio} currency="USD" isPrivacyBlur={true} />);
+    const blurredElements = container.querySelectorAll('.blur-\\[4px\\]');
+    expect(blurredElements.length).toBeGreaterThan(0);
+  });
+  
+  it('handles empty portfolio state correctly', () => {
+    const emptyPortfolio: PortfolioData = {
+      id: 'empty-1',
+      name: 'Empty Portfolio',
+      currency: 'USD',
+      items: [],
+      history: []
+    };
+    render(<KPICards portfolio={emptyPortfolio} currency="USD" />);
+    
+    // Everything should be $0
+    const zeroElements = screen.getAllByText('$0');
+    expect(zeroElements.length).toBeGreaterThanOrEqual(3);
+  });
 });
+
+

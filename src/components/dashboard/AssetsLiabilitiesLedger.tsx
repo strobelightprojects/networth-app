@@ -22,7 +22,9 @@ import {
   Info,
   List,
   Eye,
-  EyeOff
+  EyeOff,
+  CheckSquare,
+  AlertTriangle
 } from 'lucide-react';
 import { FinancialItem, CurrencyCode, AssetCategory, LiabilityCategory, InsuranceCategory, ItemType } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -34,6 +36,7 @@ interface AssetsLiabilitiesLedgerProps {
   currency: CurrencyCode;
   onUpdateItem: (item: FinancialItem) => void;
   onDeleteItem: (id: string) => void;
+  onDeleteMultipleItems?: (ids: string[]) => void;
   onOpenAddItemModal: () => void;
   isPrivacyBlur?: boolean;
 }
@@ -73,6 +76,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   currency,
   onUpdateItem,
   onDeleteItem,
+  onDeleteMultipleItems,
   onOpenAddItemModal,
   isPrivacyBlur = false,
 }) => {
@@ -171,6 +175,10 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   const [editCategory, setEditCategory] = useState<string>('');
   const [editType, setEditType] = useState<ItemType>('asset');
   const [editDate, setEditDate] = useState<string>('');
+
+  // Bulk Selection & Deletion state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isConfirmBulkDeleteOpen, setIsConfirmBulkDeleteOpen] = useState<boolean>(false);
 
   // Extract unique categories
   const availableCategories = useMemo(() => {
@@ -280,6 +288,72 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
 
   const cancelEdit = () => {
     setEditingId(null);
+  };
+
+  // Bulk Selection Logic
+  const toggleSelectItem = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const isAllVisibleSelected = processedItems.length > 0 && processedItems.every((i) => selectedIds.has(i.id));
+  const isSomeVisibleSelected = processedItems.some((i) => selectedIds.has(i.id)) && !isAllVisibleSelected;
+
+  const toggleSelectAllVisible = () => {
+    if (isAllVisibleSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        processedItems.forEach((i) => next.delete(i.id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        processedItems.forEach((i) => next.add(i.id));
+        return next;
+      });
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const selectedItemsList = useMemo(() => {
+    return items.filter((i) => selectedIds.has(i.id));
+  }, [items, selectedIds]);
+
+  const selectedSummary = useMemo(() => {
+    const assets = selectedItemsList.filter((i) => i.type === 'asset').reduce((s, i) => s + i.value, 0);
+    const liabilities = selectedItemsList.filter((i) => i.type === 'liability').reduce((s, i) => s + i.value, 0);
+    return {
+      assets,
+      liabilities,
+      netWorth: assets - liabilities,
+      count: selectedItemsList.length,
+      assetsCount: selectedItemsList.filter((i) => i.type === 'asset').length,
+      liabilitiesCount: selectedItemsList.filter((i) => i.type === 'liability').length,
+      insuranceCount: selectedItemsList.filter((i) => i.type === 'insurance').length,
+    };
+  }, [selectedItemsList]);
+
+  const executeBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    const idsToDelete = Array.from(selectedIds);
+    if (onDeleteMultipleItems) {
+      onDeleteMultipleItems(idsToDelete);
+    } else {
+      idsToDelete.forEach((id) => onDeleteItem(id));
+    }
+    setSelectedIds(new Set());
+    setIsConfirmBulkDeleteOpen(false);
   };
 
   return (
@@ -1017,13 +1091,85 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
         </div>
       )}
 
+      {/* Bulk Selection Bar */}
+      {selectedIds.size > 0 && (
+        <div className="mb-3.5 px-4 py-3 bg-emerald-950/90 dark:bg-emerald-950/90 border border-emerald-500/40 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 print:hidden">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="p-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold">
+                <CheckSquare className="w-4 h-4" />
+              </div>
+              <span className="text-sm font-bold text-white">
+                {selectedIds.size} {selectedIds.size === 1 ? 'account' : 'accounts'} selected
+              </span>
+            </div>
+
+            <div className="h-4 w-px bg-emerald-500/30 hidden sm:block" />
+
+            <div className="text-xs text-emerald-200/90 flex items-center gap-2 flex-wrap font-medium">
+              {selectedSummary.assetsCount > 0 && (
+                <span>
+                  Assets: <strong>{formatCurrency(selectedSummary.assets, currency)}</strong> ({selectedSummary.assetsCount})
+                </span>
+              )}
+              {selectedSummary.liabilitiesCount > 0 && (
+                <span>
+                  Debts: <strong>−{formatCurrency(selectedSummary.liabilities, currency)}</strong> ({selectedSummary.liabilitiesCount})
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {!isAllVisibleSelected && processedItems.length > 0 && (
+              <button
+                type="button"
+                onClick={toggleSelectAllVisible}
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 border border-emerald-600/40 transition-colors cursor-pointer"
+              >
+                Select All Visible ({processedItems.length})
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <X className="w-3 h-3" />
+              <span>Clear</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsConfirmBulkDeleteOpen(true)}
+              className="px-3 py-1.5 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-500 text-white shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected ({selectedIds.size})</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-slate-900/90 text-slate-400 font-bold border-b border-slate-800 uppercase tracking-wider text-[10px]">
+              <th className="py-3 px-3 w-10 text-center print:hidden">
+                <input
+                  type="checkbox"
+                  id="select-all-ledger-items"
+                  aria-label="Select all visible accounts"
+                  checked={isAllVisibleSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isSomeVisibleSelected;
+                  }}
+                  onChange={toggleSelectAllVisible}
+                  className="w-4 h-4 rounded border-slate-700 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-900 bg-slate-800 cursor-pointer accent-emerald-500"
+                />
+              </th>
               <th className="py-3 px-4 cursor-pointer hover:text-white" onClick={() => { setSortField('name'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
-                Name <ArrowUpDown className="w-3 h-3 inline ml-1" />
+                Account / Item <ArrowUpDown className="w-3 h-3 inline ml-1" />
               </th>
               <th className="py-3 px-4 text-right cursor-pointer hover:text-white" onClick={() => { setSortField('value'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>
                 Balance / Value <ArrowUpDown className="w-3 h-3 inline ml-1" />
@@ -1043,16 +1189,35 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
           <tbody className="divide-y divide-slate-800/80">
             {processedItems.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-500 font-medium">
+                <td colSpan={7} className="py-8 text-center text-slate-500 font-medium">
                   No accounts found matching your filters.
                 </td>
               </tr>
             ) : (
               processedItems.map((item) => {
                 const isEditing = editingId === item.id;
+                const isSelected = selectedIds.has(item.id);
 
                 return (
-                  <tr id={`ledger-row-${item.id}`} key={item.id} className="hover:bg-slate-900/50 transition-colors group">
+                  <tr 
+                    id={`ledger-row-${item.id}`} 
+                    key={item.id} 
+                    className={`hover:bg-slate-900/50 transition-colors group ${
+                      isSelected ? 'bg-emerald-500/10 dark:bg-emerald-950/20' : ''
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="py-3 px-3 text-center print:hidden">
+                      <input
+                        type="checkbox"
+                        id={`select-item-${item.id}`}
+                        aria-label={`Select ${item.name}`}
+                        checked={isSelected}
+                        onChange={() => toggleSelectItem(item.id)}
+                        className="w-4 h-4 rounded border-slate-700 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-900 bg-slate-800 cursor-pointer accent-emerald-500"
+                      />
+                    </td>
+
                     {/* Name */}
                     <td className="py-3 px-4">
                       {isEditing ? (
@@ -1187,6 +1352,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                             </optgroup>
                             {customCategories.length > 0 && (
                               <optgroup label="Your Custom Categories" className="bg-slate-900 text-slate-400 font-bold">
+                                <option key="custom-empty" value="" disabled>---</option>
                                 {customCategories.map((c) => (
                                   <option key={c} value={c} className="bg-slate-900 text-white font-normal">
                                     {c}
@@ -1344,6 +1510,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
           </tbody>
           <tfoot className="bg-slate-900/90 border-t-2 border-slate-800 font-bold text-slate-200">
             <tr>
+              <td className="py-3 px-3 print:hidden"></td>
               <td className="py-3 px-4 text-[11px] uppercase tracking-wider text-slate-400" colSpan={3}>
                 View Totals ({filteredSummary.itemCount} shown)
               </td>
@@ -1377,6 +1544,67 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
           </tfoot>
         </table>
       </div>
+
+      {/* Bulk Delete Confirmation Modal */}
+      {isConfirmBulkDeleteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bulk-delete-title"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 id="bulk-delete-title" className="text-base font-bold text-white">
+                  Delete {selectedIds.size} {selectedIds.size === 1 ? 'Account' : 'Accounts'}?
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Are you sure you want to permanently delete the selected {selectedIds.size} accounts from this portfolio? This operation will remove them from your active balance and ledger.
+                </p>
+              </div>
+            </div>
+
+            {/* Items preview list */}
+            <div className="max-h-48 overflow-y-auto rounded-xl bg-slate-950/80 border border-slate-800 p-2.5 space-y-1.5">
+              {selectedItemsList.map((item) => (
+                <div key={item.id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg bg-slate-900/60 border border-slate-800/40">
+                  <div className="truncate pr-2">
+                    <span className="font-semibold text-slate-200">{item.name}</span>
+                    <span className="text-[10px] text-slate-500 ml-1.5">({item.category})</span>
+                  </div>
+                  <span className={`font-mono font-bold shrink-0 ${
+                    item.type === 'asset' ? 'text-emerald-400' : item.type === 'liability' ? 'text-rose-400' : 'text-purple-300'
+                  }`}>
+                    {item.type === 'liability' ? '-' : ''}{formatCurrency(item.value, currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsConfirmBulkDeleteOpen(false)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={executeBulkDelete}
+                className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-500 text-white shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Yes, Delete {selectedIds.size} {selectedIds.size === 1 ? 'Item' : 'Items'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

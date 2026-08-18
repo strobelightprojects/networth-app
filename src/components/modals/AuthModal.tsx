@@ -56,7 +56,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error("Google auth error:", err);
-      setError(err.message || 'Failed to sign in with Google');
+      if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        setError('Google Sign-in pop-up was blocked by the browser or embedded iframe preview. You can open the app in a new tab, or sign in using Email/Password or Instant Guest Mode.');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError('This domain is not authorized for Google OAuth yet. You can sign in using Email & Password or Instant Guest Mode.');
+      } else {
+        setError(err.message || 'Failed to sign in with Google');
+      }
     } finally {
       setLoading(false);
     }

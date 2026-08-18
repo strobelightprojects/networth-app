@@ -29,18 +29,20 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build
+        run: npm ci || npm install
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Build project
+        env:
+          NODE_ENV: production
+        run: npm run build
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: 'dist'
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -503,7 +503,7 @@ import { suggestCategoryFromAccountName } from './aiCategorySuggester';
 /**
  * Infer asset/liability/insurance category from strings using AI heuristic
  */
-function inferCategory(name: string, catStr: string, type: ItemType): AssetCategory | LiabilityCategory | InsuranceCategory {
+export function inferCategory(name: string, catStr: string, type: ItemType): AssetCategory | LiabilityCategory | InsuranceCategory {
   const aiMatch = suggestCategoryFromAccountName(name + ' ' + catStr);
   if (aiMatch) {
     return aiMatch.suggestedCategory;
@@ -545,7 +545,7 @@ function inferCategory(name: string, catStr: string, type: ItemType): AssetCateg
 /**
  * Extract date from filename if available (e.g. jan_2025.csv, 2026-01.xlsx, Portfolio_2024.csv)
  */
-export function extractDateFromFilename(filename: string, fallbackDate: string): string {
+export function extractDateFromFilename(filename: string, fallbackDate: string = ''): string {
   if (!filename) return fallbackDate;
   const name = filename.toLowerCase();
 

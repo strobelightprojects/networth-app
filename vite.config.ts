@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
   return {
-    base: './',
+    base: process.env.BASE_PATH || '/',
     plugins: [
       react(), 
       tailwindcss(),
@@ -58,12 +58,13 @@ export default defineConfig(() => {
       emptyOutDir: true,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            charts: ['recharts'],
-            xlsx: ['xlsx', 'papaparse'],
-            firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
-            icons: ['lucide-react'],
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('recharts')) return 'charts';
+              if (id.includes('xlsx') || id.includes('papaparse')) return 'xlsx';
+              if (id.includes('firebase')) return 'firebase';
+              if (id.includes('lucide-react')) return 'icons';
+            }
           },
         },
       },

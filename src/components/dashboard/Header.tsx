@@ -119,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4" />
-              <span>Import Sheet</span>
+              <span>Import Data</span>
             </button>
 
             {/* Add Item Quick Button */}
@@ -210,7 +210,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-xs font-semibold rounded-lg shadow-sm"
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                <span>Import Sheet</span>
+                <span>Import Data</span>
               </button>
 
               <button

@@ -325,6 +325,21 @@ export default function App() {
     );
   };
 
+  // Handle Multiple Items Bulk Deletion
+  const handleDeleteMultipleItems = (ids: string[]) => {
+    if (!ids || ids.length === 0) return;
+    const idSet = new Set(ids);
+    setPortfolios((prev) =>
+      prev.map((p) => {
+        if (p.id !== currentPortfolio.id) return p;
+        return {
+          ...p,
+          items: p.items.filter((i) => !idSet.has(i.id)),
+        };
+      })
+    );
+  };
+
   // Handle Adding Single Item
   const handleAddItem = (newItem: FinancialItem) => {
     setPortfolios((prev) =>
@@ -682,6 +697,7 @@ export default function App() {
           currency={currency}
           onUpdateItem={handleUpdateItem}
           onDeleteItem={handleDeleteItem}
+          onDeleteMultipleItems={handleDeleteMultipleItems}
           onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
           isPrivacyBlur={isPrivacyBlur}
         />

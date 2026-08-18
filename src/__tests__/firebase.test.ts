@@ -118,4 +118,51 @@ describe('Firebase Utility & Storage Optimization Tests', () => {
     expect(deleteDoc).toHaveBeenCalledTimes(3); // 2 portfolio docs + 1 user profile doc
     expect(deleteUser).toHaveBeenCalledWith(mockUser); // Firebase Auth deletion
   });
+  
+  it('handles auth operations (signInWithGoogle, signInGuest, logoutUser)', async () => {
+    const { signInWithGoogle, signInGuest, logoutUser } = await import('../lib/firebase');
+    const { signInWithPopup, signInAnonymously, signOut } = await import('firebase/auth');
+    
+    // Mock user returns
+    (signInWithPopup as any).mockResolvedValueOnce({ user: { uid: 'u1', email: 'a@b.com' } });
+    const user1 = await signInWithGoogle();
+    expect(user1).toBeDefined();
+    
+    (signInAnonymously as any).mockResolvedValueOnce({ user: { uid: 'u2' } });
+    const user2 = await signInGuest();
+    expect(user2).toBeDefined();
+    
+    await logoutUser();
+    expect(signOut).toHaveBeenCalled();
+  });
+  
+  it('handles firestore sync operations', async () => {
+    const { subscribeUserPortfolios, saveUserPortfolioToFirestore, deleteUserPortfolioFromFirestore, syncAllPortfoliosToFirestore } = await import('../lib/firebase');
+    const { onSnapshot, setDoc, deleteDoc } = await import('firebase/firestore');
+    
+    const mockPortfolio = {
+      id: 'p1',
+      name: 'Test Portfolio',
+      currency: 'USD',
+      items: [],
+      history: []
+    };
+    
+    // Test subscribe
+    const mockCallback = vi.fn();
+    subscribeUserPortfolios('user123', mockCallback);
+    expect(onSnapshot).toHaveBeenCalled();
+    
+    // Test save
+    await saveUserPortfolioToFirestore('user123', mockPortfolio as any);
+    expect(setDoc).toHaveBeenCalled();
+    
+    // Test sync all
+    await syncAllPortfoliosToFirestore('user123', [mockPortfolio as any]);
+    expect(setDoc).toHaveBeenCalledTimes(2);
+    
+    // Test delete
+    await deleteUserPortfolioFromFirestore('user123', 'p1');
+    expect(deleteDoc).toHaveBeenCalled();
+  });
 });
