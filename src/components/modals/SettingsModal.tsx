@@ -282,6 +282,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </p>
             </div>
           </div>
+
+          {/* Privacy & Security Settings */}
+          <div className="border-t border-slate-200 dark:border-slate-800/80 pt-5 space-y-4">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+              Privacy & Security Settings
+            </h4>
+
+            {/* Screen Lock Toggle */}
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
+              <div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Require Screen Lock</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Require re-authentication after 5 minutes of inactivity</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+
+            {/* Default Privacy Blur Mode Toggle */}
+            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
+              <div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">Default to Privacy Blur</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Automatically hide financial details when the app starts</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

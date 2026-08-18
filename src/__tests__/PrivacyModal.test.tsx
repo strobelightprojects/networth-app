@@ -16,7 +16,8 @@ describe('PrivacyModal', () => {
     expect(screen.getByText('1. What Data We Collect & Store')).toBeInTheDocument();
     expect(screen.getByText('2. Data Security & Encryption Standards')).toBeInTheDocument();
     expect(screen.getByText('3. Data Compression & 1-Year Inactivity Cleanup Policy')).toBeInTheDocument();
-    expect(screen.getByText('4. Financial & Legal Disclaimer')).toBeInTheDocument();
+    expect(screen.getByText('4. Privacy Tools & Display Settings')).toBeInTheDocument();
+    expect(screen.getByText('5. Financial & Legal Disclaimer')).toBeInTheDocument();
   });
 
   it('does not render when isOpen is false', () => {

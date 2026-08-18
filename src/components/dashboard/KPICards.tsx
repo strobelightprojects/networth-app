@@ -7,9 +7,10 @@ import { getMostRecentItems } from '../../utils/itemHelpers';
 interface KPICardsProps {
   portfolio: PortfolioData;
   currency: CurrencyCode;
+  isPrivacyBlur?: boolean;
 }
 
-export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency }) => {
+export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency, isPrivacyBlur = false }) => {
   // Calculate Totals using most recent items per account
   const activeItems = getMostRecentItems(portfolio.items);
 
@@ -57,7 +58,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency }) => {
             <Wallet className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
           {formatCurrency(netWorth, currency)}
         </div>
         <div className="flex items-center gap-2 text-xs">
@@ -82,13 +83,13 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency }) => {
             <ShieldCheck className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
           {formatCurrency(totalAssets, currency)}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span className="text-blue-600 dark:text-blue-400 font-semibold">{assetCount} Assets</span>
           <span>•</span>
-          <span>Avg {formatCurrency(avgAssetVal, currency, true)}</span>
+          <span>Avg {isPrivacyBlur ? '••••' : formatCurrency(avgAssetVal, currency, true)}</span>
         </div>
       </div>
 
@@ -101,7 +102,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency }) => {
             <CreditCard className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
           {formatCurrency(totalLiabilities, currency)}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -122,7 +123,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency }) => {
             <HeartHandshake className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-1">
+        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-1 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
           {formatCurrency(totalInsuranceCoverage, currency)}
         </div>
         <div className="flex items-center justify-between text-xs text-purple-700/80 dark:text-purple-300/80">

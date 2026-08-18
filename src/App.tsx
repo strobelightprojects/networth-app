@@ -80,6 +80,8 @@ export default function App() {
   const isFirestoreUpdateRef = useRef<boolean>(false);
 
   // Listen to Auth state changes and subscribe to Firestore portfolios
+  const [isPrivacyBlur, setIsPrivacyBlur] = useState<boolean>(false);
+
   useEffect(() => {
     let unsubFirestore: (() => void) | null = null;
 
@@ -623,6 +625,8 @@ export default function App() {
         currency={currency}
         onChangeCurrency={(c) => setCurrency(c)}
         currentUser={currentUser}
+        isPrivacyBlur={isPrivacyBlur}
+        onTogglePrivacyBlur={() => setIsPrivacyBlur(!isPrivacyBlur)}
       />
 
       {/* Main Content Dashboard */}
@@ -658,17 +662,18 @@ export default function App() {
         </div>
 
         {/* KPI Cards Summary */}
-        <KPICards portfolio={filteredPortfolio} currency={currency} />
+        <KPICards portfolio={filteredPortfolio} currency={currency} isPrivacyBlur={isPrivacyBlur} />
 
         {/* Portfolio Allocation */}
         <div className="grid grid-cols-1 gap-6">
-          <AllocationChart portfolio={filteredPortfolio} currency={currency} />
+          <AllocationChart portfolio={filteredPortfolio} currency={currency} isPrivacyBlur={isPrivacyBlur} />
         </div>
 
         {/* Historical Net Worth Trajectory & Projection Chart */}
         <NetWorthChart
           portfolio={filteredPortfolio}
           currency={currency}
+          isPrivacyBlur={isPrivacyBlur}
         />
 
         {/* Asset & Liability Ledger Table */}
@@ -678,6 +683,7 @@ export default function App() {
           onUpdateItem={handleUpdateItem}
           onDeleteItem={handleDeleteItem}
           onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
+          isPrivacyBlur={isPrivacyBlur}
         />
 
       </main>

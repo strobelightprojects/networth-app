@@ -10,9 +10,10 @@ import { getMostRecentItems } from '../../utils/itemHelpers';
 interface NetWorthChartProps {
   portfolio: PortfolioData;
   currency: CurrencyCode;
+  isPrivacyBlur?: boolean;
 }
 
-export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currency }) => {
+export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currency, isPrivacyBlur = false }) => {
   const [timeframe, setTimeframe] = useState<'6M' | '1Y' | '3Y' | 'ALL'>('1Y');
   const [chartMode, setChartMode] = useState<'networth' | 'stacked'>('networth');
 
@@ -227,11 +228,15 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                           )}
                         </div>
                         <div className="space-y-1">
-                          <div className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                          <div className={`text-emerald-600 dark:text-emerald-400 font-bold text-sm ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
                             Net Worth: {formatCurrency(data.netWorth, currency)}
                           </div>
-                          <div className="text-blue-600 dark:text-blue-400">Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
-                          <div className="text-rose-600 dark:text-rose-400">Total Debt: {formatCurrency(data.totalLiabilities, currency)}</div>
+                          <div className={`text-blue-600 dark:text-blue-400 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                            Total Assets: {formatCurrency(data.totalAssets, currency)}
+                          </div>
+                          <div className={`text-rose-600 dark:text-rose-400 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                            Total Debt: {formatCurrency(data.totalLiabilities, currency)}
+                          </div>
                         </div>
                       </div>
                     );

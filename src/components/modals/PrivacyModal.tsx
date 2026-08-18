@@ -82,11 +82,26 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({
             </ul>
           </div>
 
-          {/* Section 4: Financial Disclaimer */}
+          {/* Section 4: Privacy Tools */}
+          <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2">
+            <h3 className="font-semibold text-white flex items-center gap-2 text-sm">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              4. Privacy Tools & Display Settings
+            </h3>
+            <p className="text-slate-400">
+              We provide tools to help protect your financial privacy when using the application in public or shared spaces:
+            </p>
+            <ul className="list-disc pl-5 space-y-1 text-slate-300">
+              <li><strong>Privacy Blur Mode:</strong> Use the "Hide Details" toggle in the top navigation bar to apply a visual blur filter to all sensitive financial values across the dashboard.</li>
+              <li><strong>Secure Screen Lock:</strong> You can configure the app to automatically require re-authentication (screen lock) after a period of inactivity to prevent unauthorized physical access to your session.</li>
+            </ul>
+          </div>
+
+          {/* Section 5: Financial Disclaimer */}
           <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2">
             <h3 className="font-semibold text-amber-300 flex items-center gap-2 text-sm">
               <Scale className="w-4 h-4 text-amber-400" />
-              4. Financial & Legal Disclaimer
+              5. Financial & Legal Disclaimer
             </h3>
             <p className="text-amber-200/90 leading-relaxed">
               Net Worth Tracker is strictly an informational tool provided for personal tracking and spreadsheet visualization. 

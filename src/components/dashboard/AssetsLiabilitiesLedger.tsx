@@ -35,6 +35,7 @@ interface AssetsLiabilitiesLedgerProps {
   onUpdateItem: (item: FinancialItem) => void;
   onDeleteItem: (id: string) => void;
   onOpenAddItemModal: () => void;
+  isPrivacyBlur?: boolean;
 }
 
 const ALL_ASSET_CATEGORIES: AssetCategory[] = [
@@ -73,6 +74,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   onUpdateItem,
   onDeleteItem,
   onOpenAddItemModal,
+  isPrivacyBlur = false,
 }) => {
   const [typeFilter, setTypeFilter] = useState<'active' | 'all' | 'asset' | 'liability' | 'insurance' | 'excluded'>('active');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -477,7 +479,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                 {typeFilter === 'active' ? 'Selected' : 'Click to View'}
               </span>
             </div>
-            <div className="text-lg font-extrabold text-emerald-400 mt-2">
+            <div className={`text-lg font-extrabold text-emerald-400 mt-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
               {formatCurrency(netWorthSummary.totalNetWorth, currency)}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">
@@ -509,7 +511,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                 {typeFilter === 'asset' ? 'Selected' : 'Click to View'}
               </span>
             </div>
-            <div className="text-lg font-extrabold text-white mt-2">
+            <div className={`text-lg font-extrabold text-white mt-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
               {formatCurrency(netWorthSummary.totalAssets, currency)}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">
@@ -541,7 +543,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                 {typeFilter === 'liability' ? 'Selected' : 'Click to View'}
               </span>
             </div>
-            <div className="text-lg font-extrabold text-white mt-2">
+            <div className={`text-lg font-extrabold text-white mt-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
               {formatCurrency(netWorthSummary.totalLiabilities, currency)}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">
@@ -573,7 +575,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                 {typeFilter === 'insurance' ? 'Selected' : 'Click to View'}
               </span>
             </div>
-            <div className="text-lg font-extrabold text-purple-300 mt-2">
+            <div className={`text-lg font-extrabold text-purple-300 mt-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
               {formatCurrency(netWorthSummary.totalInsurance, currency)}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">
@@ -632,7 +634,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                         </div>
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-1.5">
-                        <span className={`font-extrabold ${item.isExcluded ? 'line-through text-slate-500 text-[11px]' : 'text-emerald-400'}`}>
+                        <span className={`font-extrabold ${item.isExcluded ? 'line-through text-slate-500 text-[11px]' : 'text-emerald-400'} ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
                           {formatCurrency(item.value, currency)}
                         </span>
 
@@ -712,7 +714,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                           </div>
                         </div>
                         <div className="text-right shrink-0 flex items-center gap-1.5">
-                          <span className={`font-extrabold ${item.isExcluded ? 'line-through text-slate-500 text-[11px]' : 'text-rose-400'}`}>
+                          <span className={`font-extrabold ${item.isExcluded ? 'line-through text-slate-500 text-[11px]' : 'text-rose-400'} ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
                             −{formatCurrency(item.value, currency)}
                           </span>
 
@@ -790,7 +792,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                         </div>
                       </div>
                       <div className="text-right shrink-0 flex items-center gap-1.5">
-                        <span className={`font-extrabold ${item.isExcluded ? 'line-through text-slate-500 text-[11px]' : 'text-purple-300'}`}>
+                        <span className={`font-extrabold ${item.isExcluded ? 'line-through text-slate-500 text-[11px]' : 'text-purple-300'} ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
                           {formatCurrency(item.value, currency)}
                         </span>
 
@@ -872,7 +874,9 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                         <span className="text-[10px] text-slate-400 ml-1.5">({cat.count})</span>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="font-extrabold text-emerald-400">{formatCurrency(cat.total, currency)}</div>
+                        <div className={`font-extrabold text-emerald-400 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                          {formatCurrency(cat.total, currency)}
+                        </div>
                         <div className="text-[9px] text-slate-400">{pct.toFixed(1)}%</div>
                       </div>
                     </button>
@@ -915,7 +919,9 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                           <span className="text-[10px] text-slate-400 ml-1.5">({cat.count})</span>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="font-extrabold text-rose-400">−{formatCurrency(cat.total, currency)}</div>
+                          <div className={`font-extrabold text-rose-400 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                            −{formatCurrency(cat.total, currency)}
+                          </div>
                           <div className="text-[9px] text-slate-400">{pct.toFixed(1)}%</div>
                         </div>
                       </button>
@@ -951,7 +957,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                     <span>Total Coverage / Benefits:</span>
                     <span className="text-[10px] text-purple-300 underline font-semibold">View Policies</span>
                   </div>
-                  <div className="text-base font-extrabold text-purple-300 mt-0.5">
+                  <div className={`text-base font-extrabold text-purple-300 mt-0.5 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
                     {formatCurrency(netWorthSummary.totalInsurance, currency)}
                   </div>
                   <div className="text-[10px] text-purple-300/80 mt-0.5">
@@ -1094,7 +1100,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                                 : item.type === 'liability' 
                                 ? 'text-rose-400' 
                                 : 'text-purple-300'
-                            }`}
+                            } ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}
                           >
                             {item.type === 'liability' ? '-' : ''}
                             {formatCurrency(item.value, currency)}
@@ -1107,7 +1113,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                           )}
 
                           {item.currency && item.currency !== currency && item.originalValue !== undefined && (
-                            <div className="text-[10px] text-slate-400 font-medium mt-0.5" title={`Real-time FX converted from ${item.currency}`}>
+                            <div className={`text-[10px] text-slate-400 font-medium mt-0.5 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`} title={`Real-time FX converted from ${item.currency}`}>
                               Orig: {getCurrencySymbol(item.currency)}{item.originalValue.toLocaleString()} {item.currency}
                               {item.exchangeRate ? ` @ ${item.exchangeRate}` : ''}
                             </div>
