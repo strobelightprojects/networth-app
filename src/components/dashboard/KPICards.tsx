@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, ShieldCheck, CreditCard, Shield, TrendingUp, TrendingDown, ArrowUpRight, HeartHandshake } from 'lucide-react';
+import { Wallet, ShieldCheck, CreditCard, Shield, TrendingUp, TrendingDown, HeartHandshake } from 'lucide-react';
 import { PortfolioData, CurrencyCode } from '../../types';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { getMostRecentItems } from '../../utils/itemHelpers';
@@ -7,10 +7,9 @@ import { getMostRecentItems } from '../../utils/itemHelpers';
 interface KPICardsProps {
   portfolio: PortfolioData;
   currency: CurrencyCode;
-  isPrivacyBlur?: boolean;
 }
 
-export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency, isPrivacyBlur = false }) => {
+export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency }) => {
   // Calculate Totals using most recent items per account
   const activeItems = getMostRecentItems(portfolio.items);
 
@@ -28,8 +27,6 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency, isPriva
 
   const netWorth = totalAssets - totalLiabilities;
 
-  // Equity Ratio (% of assets owned outright)
-  const equityRatio = totalAssets > 0 ? (netWorth / totalAssets) * 100 : 100;
   const assetCount = activeItems.filter(i => i.type === 'asset').length;
   const liabilityCount = activeItems.filter(i => i.type === 'liability').length;
   const avgAssetVal = assetCount > 0 ? totalAssets / assetCount : 0;
@@ -58,7 +55,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency, isPriva
             <Wallet className="w-4 h-4" />
           </div>
         </div>
-        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
           {formatCurrency(netWorth, currency)}
         </div>
         <div className="flex items-center gap-2 text-xs">
@@ -83,13 +80,13 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency, isPriva
             <ShieldCheck className="w-4 h-4" />
           </div>
         </div>
-        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
           {formatCurrency(totalAssets, currency)}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span className="text-blue-600 dark:text-blue-400 font-semibold">{assetCount} Assets</span>
           <span>•</span>
-          <span>Avg {isPrivacyBlur ? '••••' : formatCurrency(avgAssetVal, currency, true)}</span>
+          <span>Avg {formatCurrency(avgAssetVal, currency, true)}</span>
         </div>
       </div>
 
@@ -102,7 +99,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency, isPriva
             <CreditCard className="w-4 h-4" />
           </div>
         </div>
-        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
           {formatCurrency(totalLiabilities, currency)}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -123,7 +120,7 @@ export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency, isPriva
             <HeartHandshake className="w-4 h-4" />
           </div>
         </div>
-        <div className={`text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-1 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+        <div className="text-2xl xl:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-1">
           {formatCurrency(totalInsuranceCoverage, currency)}
         </div>
         <div className="flex items-center justify-between text-xs text-purple-700/80 dark:text-purple-300/80">

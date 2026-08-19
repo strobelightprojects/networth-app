@@ -8,7 +8,6 @@ import { getMostRecentItems } from '../../utils/itemHelpers';
 interface AllocationChartProps {
   portfolio: PortfolioData;
   currency: CurrencyCode;
-  isPrivacyBlur?: boolean;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -35,7 +34,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Property & Umbrella': '#34D399',
 };
 
-export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, currency, isPrivacyBlur = false }) => {
+export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, currency }) => {
   const [viewMode, setViewMode] = useState<'assetCategory' | 'liabilityType' | 'insuranceType'>('assetCategory');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
@@ -195,7 +194,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
                     return (
                       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl shadow-xl text-xs text-slate-900 dark:text-white">
                         <div className="font-bold text-slate-900 dark:text-white mb-0.5">{item.name}</div>
-                        <div className={`text-emerald-600 dark:text-emerald-400 font-semibold ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                        <div className="text-emerald-600 dark:text-emerald-400 font-semibold">
                           {formatCurrency(item.value, currency)}
                         </div>
                         <div className="text-slate-500 dark:text-slate-400">{item.percentage.toFixed(1)}% of total</div>
@@ -211,7 +210,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
           {/* Donut Center Summary */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">Total</span>
-            <span className={`text-lg font-black text-slate-900 dark:text-white ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+            <span className="text-lg font-black text-slate-900 dark:text-white">
               {formatCurrency(totalSum, currency, true)}
             </span>
           </div>
@@ -247,7 +246,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
                   </div>
                   <div className="flex items-center gap-2 font-medium">
                     <span className="text-slate-500 dark:text-slate-400">{item.percentage.toFixed(1)}%</span>
-                    <span className={`text-slate-900 dark:text-white font-bold ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                    <span className="text-slate-900 dark:text-white font-bold">
                       {formatCurrency(item.value, currency)}
                     </span>
                     {isExpanded ? (
@@ -263,7 +262,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
                   <div className="bg-white dark:bg-slate-900/90 border-t border-slate-200 dark:border-slate-800/80 p-2.5 space-y-1.5 animate-in fade-in duration-150">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 px-1 flex justify-between items-center">
                       <span>Holdings in {item.name}</span>
-                      <span className={`text-emerald-600 dark:text-emerald-400 font-medium ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
                         Total: {formatCurrency(item.value, currency)}
                       </span>
                     </div>
@@ -279,7 +278,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
                             <div className="font-semibold text-slate-800 dark:text-slate-200">{holding.name}</div>
                           </div>
                           <div className="text-right">
-                            <div className={`font-bold text-slate-900 dark:text-slate-100 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                            <div className="font-bold text-slate-900 dark:text-slate-100">
                               {formatCurrency(holding.value, currency)}
                             </div>
                             {item.value > 0 && (

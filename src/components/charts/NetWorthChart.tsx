@@ -10,10 +10,9 @@ import { getMostRecentItems } from '../../utils/itemHelpers';
 interface NetWorthChartProps {
   portfolio: PortfolioData;
   currency: CurrencyCode;
-  isPrivacyBlur?: boolean;
 }
 
-export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currency, isPrivacyBlur = false }) => {
+export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currency }) => {
   const [timeframe, setTimeframe] = useState<'6M' | '1Y' | '3Y' | 'ALL'>('1Y');
   const [chartMode, setChartMode] = useState<'networth' | 'stacked'>('networth');
 
@@ -235,13 +234,13 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                           )}
                         </div>
                         <div className="space-y-1">
-                          <div className={`text-emerald-600 dark:text-emerald-400 font-bold text-sm ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                          <div className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                             Net Worth: {formatCurrency(data.netWorth, currency)}
                           </div>
-                          <div className={`text-blue-600 dark:text-blue-400 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                          <div className="text-blue-600 dark:text-blue-400">
                             Total Assets: {formatCurrency(data.totalAssets, currency)}
                           </div>
-                          <div className={`text-rose-600 dark:text-rose-400 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                          <div className="text-rose-600 dark:text-rose-400">
                             Total Debt: {formatCurrency(data.totalLiabilities, currency)}
                           </div>
                         </div>
@@ -290,9 +289,9 @@ export const NetWorthChart: React.FC<NetWorthChartProps> = ({ portfolio, currenc
                           {label}
                         </div>
                         <div className="space-y-1">
-                          <div className={`text-blue-600 dark:text-blue-400 font-semibold ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
-                          <div className={`text-rose-600 dark:text-rose-400 font-semibold ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>Total Liabilities: {formatCurrency(data.totalLiabilities, currency)}</div>
-                          <div className={`text-emerald-600 dark:text-emerald-400 font-bold border-t border-slate-200 dark:border-slate-800 pt-1 mt-1 ${isPrivacyBlur ? 'filter blur-[4px] select-none' : ''}`}>
+                          <div className="text-blue-600 dark:text-blue-400 font-semibold">Total Assets: {formatCurrency(data.totalAssets, currency)}</div>
+                          <div className="text-rose-600 dark:text-rose-400 font-semibold">Total Liabilities: {formatCurrency(data.totalLiabilities, currency)}</div>
+                          <div className="text-emerald-600 dark:text-emerald-400 font-bold border-t border-slate-200 dark:border-slate-800 pt-1 mt-1">
                             Net Worth: {formatCurrency(data.netWorth, currency)}
                           </div>
                         </div>

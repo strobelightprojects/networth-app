@@ -13,9 +13,7 @@ import {
   ManageFilesModal, 
   SettingsModal, 
   AuthModal, 
-  PrivacyModal,
   ReportPreviewModal,
-  ScreenLockOverlay
 } from './components';
 import { auth, subscribeUserPortfolios, saveUserPortfolioToFirestore, deleteUserPortfolioFromFirestore, syncAllPortfoliosToFirestore } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -79,80 +77,6 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   const isFirestoreUpdateRef = useRef<boolean>(false);
-
-  // Privacy & Screen Lock state
-  const [isPrivacyBlur, setIsPrivacyBlur] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('defaultPrivacyBlur') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const [requireScreenLock, setRequireScreenLock] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('requireScreenLock') === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const [isScreenLocked, setIsScreenLocked] = useState<boolean>(false);
-  const [lockedAt, setLockedAt] = useState<Date | null>(null);
-  const lastActivityTimestampRef = useRef<number>(Date.now());
-
-  // Inactivity tracking for Screen Lock (5 minutes timeout)
-  useEffect(() => {
-    if (!requireScreenLock) {
-      setIsScreenLocked(false);
-      return;
-    }
-
-    lastActivityTimestampRef.current = Date.now();
-
-    const recordActivity = () => {
-      if (!isScreenLocked) {
-        lastActivityTimestampRef.current = Date.now();
-      }
-    };
-
-    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'pointerdown'];
-    activityEvents.forEach((ev) => window.addEventListener(ev, recordActivity, { passive: true }));
-
-    const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
-
-    const intervalId = setInterval(() => {
-      if (requireScreenLock && !isScreenLocked) {
-        const elapsed = Date.now() - lastActivityTimestampRef.current;
-        if (elapsed >= INACTIVITY_TIMEOUT_MS) {
-          setIsScreenLocked(true);
-          setLockedAt(new Date());
-        }
-      }
-    }, 5000);
-
-    return () => {
-      activityEvents.forEach((ev) => window.removeEventListener(ev, recordActivity));
-      clearInterval(intervalId);
-    };
-  }, [requireScreenLock, isScreenLocked]);
-
-  const handleLockScreenNow = () => {
-    setIsScreenLocked(true);
-    setLockedAt(new Date());
-  };
-
-  const handleUnlockScreen = () => {
-    setIsScreenLocked(false);
-    lastActivityTimestampRef.current = Date.now();
-  };
-
-  const handleUpdatePrivacySettings = (settings: { requireScreenLock: boolean; defaultPrivacyBlur: boolean }) => {
-    setRequireScreenLock(settings.requireScreenLock);
-    if (settings.defaultPrivacyBlur) {
-      setIsPrivacyBlur(true);
-    }
-  };
 
   useEffect(() => {
     let unsubFirestore: (() => void) | null = null;
@@ -261,7 +185,6 @@ export default function App() {
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState<boolean>(false);
   const [isManageFilesOpen, setIsManageFilesOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
-  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState<boolean>(false);
   const [isReportPreviewOpen, setIsReportPreviewOpen] = useState<boolean>(false);
 
   // Global Date Filter for Reports
@@ -609,26 +532,6 @@ export default function App() {
     );
   };
 
-  // Handler for adding manual history point from NetWorthChart
-  const handleAddHistoryPoint = (point: { date: string; totalAssets: number; totalLiabilities: number; netWorth: number }) => {
-    setPortfolios((prev) =>
-      prev.map((p) => {
-        if (p.id !== currentPortfolio.id) return p;
-        const newHistory = upsertHistoryPoint(
-          p.history,
-          point.date,
-          point.totalAssets,
-          point.totalLiabilities,
-          point.netWorth
-        );
-        return {
-          ...p,
-          history: newHistory,
-        };
-      })
-    );
-  };
-
   // CSV Export
   const handleExportCSV = (startDate?: string, endDate?: string) => {
     let items = currentPortfolio.items;
@@ -682,7 +585,6 @@ export default function App() {
     setIsColumnMapperOpen(false);
     setIsAddItemModalOpen(false);
     setIsAuthModalOpen(false);
-    setIsPrivacyModalOpen(false);
     setIsReportPreviewOpen(false);
     setReportStartDate(startDate || '');
     setReportEndDate(endDate || '');
@@ -706,16 +608,9 @@ export default function App() {
         onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onOpenPrivacyModal={() => setIsPrivacyModalOpen(true)}
-        onExportCSV={handleExportCSV}
-        onPrint={handlePrint}
         currency={currency}
         onChangeCurrency={(c) => setCurrency(c)}
         currentUser={currentUser}
-        isPrivacyBlur={isPrivacyBlur}
-        onTogglePrivacyBlur={() => setIsPrivacyBlur(!isPrivacyBlur)}
-        requireScreenLock={requireScreenLock}
-        onLockScreen={handleLockScreenNow}
       />
 
       {/* Main Content Dashboard */}
@@ -751,18 +646,17 @@ export default function App() {
         </div>
 
         {/* KPI Cards Summary */}
-        <KPICards portfolio={filteredPortfolio} currency={currency} isPrivacyBlur={isPrivacyBlur} />
+        <KPICards portfolio={filteredPortfolio} currency={currency} />
 
         {/* Portfolio Allocation */}
         <div className="grid grid-cols-1 gap-6">
-          <AllocationChart portfolio={filteredPortfolio} currency={currency} isPrivacyBlur={isPrivacyBlur} />
+          <AllocationChart portfolio={filteredPortfolio} currency={currency} />
         </div>
 
         {/* Historical Net Worth Trajectory & Projection Chart */}
         <NetWorthChart
           portfolio={filteredPortfolio}
           currency={currency}
-          isPrivacyBlur={isPrivacyBlur}
         />
 
         {/* Asset & Liability Ledger Table */}
@@ -773,7 +667,6 @@ export default function App() {
           onDeleteItem={handleDeleteItem}
           onDeleteMultipleItems={handleDeleteMultipleItems}
           onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
-          isPrivacyBlur={isPrivacyBlur}
         />
 
       </main>
@@ -787,17 +680,10 @@ export default function App() {
           <span>Net Worth Tracker © 2026</span>
           <span>•</span>
           <button
-            onClick={() => setIsPrivacyModalOpen(true)}
-            className="text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
-          >
-            Privacy Policy & Terms
-          </button>
-          <span>•</span>
-          <button
             onClick={() => setIsAuthModalOpen(true)}
             className="text-slate-400 hover:text-slate-200 underline cursor-pointer"
           >
-            Security & Account
+            Cloud Storage & Account
           </button>
         </div>
       </footer>
@@ -851,8 +737,6 @@ export default function App() {
         onExportCSV={handleExportCSV}
         onPrint={handlePrint}
         onPreviewReport={() => setIsReportPreviewOpen(true)}
-        onUpdatePrivacySettings={handleUpdatePrivacySettings}
-        onLockScreenNow={handleLockScreenNow}
       />
 
       <ReportPreviewModal
@@ -869,20 +753,6 @@ export default function App() {
         currentUser={currentUser}
         onSyncLocalDataToCloud={handleSyncLocalDataToCloud}
         isSyncing={isSyncing}
-      />
-
-      <PrivacyModal
-        isOpen={isPrivacyModalOpen}
-        onClose={() => setIsPrivacyModalOpen(false)}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-      />
-
-      <ScreenLockOverlay
-        isLocked={isScreenLocked}
-        currentUser={currentUser}
-        onUnlock={handleUnlockScreen}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        lockedAt={lockedAt}
       />
 
     </div>

@@ -2,7 +2,6 @@ import React from 'react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AuthModal } from '../components/modals/AuthModal';
-import { PrivacyModal } from '../components/modals/PrivacyModal';
 import { ReportPreviewModal } from '../components/modals/ReportPreviewModal';
 import { ColumnMapperModal } from '../components/modals/ColumnMapperModal';
 import { PortfolioData } from '../types';
@@ -61,22 +60,6 @@ describe('Smoke Modals Lifecycle Tests', () => {
     const toggleBtn = screen.getByRole('button', { name: /Need an account\? Register/i });
     fireEvent.click(toggleBtn);
     expect(screen.getByRole('button', { name: /Create Free Account/i })).toBeDefined();
-  });
-
-  it('smoke tests PrivacyModal display and close', () => {
-    const onClose = vi.fn();
-
-    render(
-      <PrivacyModal
-        isOpen={true}
-        onClose={onClose}
-      />
-    );
-
-    expect(screen.getByText(/Privacy Policy & Terms of Service/i)).toBeDefined();
-    const closeBtn = screen.getByRole('button', { name: /Close Privacy & Terms/i });
-    fireEvent.click(closeBtn);
-    expect(onClose).toHaveBeenCalled();
   });
 
   it('smoke tests ReportPreviewModal summary calculation and print trigger', () => {
