@@ -1,0 +1,48 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/app/applet[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 2801[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and filters items by text search [33m 366[2mms[22m[39m
+     [33m[2m✓[22m[39m allows toggling item exclusion and breakdown view [33m 423[2mms[22m[39m
+     [33m[2m✓[22m[39m allows sorting columns [33m 309[2mms[22m[39m
+     [33m[2m✓[22m[39m supports item selection and bulk delete operations [33m 929[2mms[22m[39m
+ [32m✓[39m src/__tests__/App.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1923[2mms[22m[39m
+     [33m[2m✓[22m[39m renders without crashing and can interact with modals [33m 808[2mms[22m[39m
+     [33m[2m✓[22m[39m can add a new item and update state [33m 398[2mms[22m[39m
+     [33m[2m✓[22m[39m can delete an item [33m 502[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_e2e_portfolio_flow.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1430[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests opening Manage Portfolios and creating a new portfolio file [33m 995[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1411[2mms[22m[39m
+     [33m[2m✓[22m[39m renders AddItemModal correctly and handles asset account creation [33m 331[2mms[22m[39m
+     [33m[2m✓[22m[39m supports creating custom categories [33m 337[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal_validation.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 735[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal when open and allows switching between Asset, Liability, and Insurance [33m 551[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 736[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 703[2mms[22m[39m
+     [33m[2m✓[22m[39m allows creating a new portfolio file [33m 383[2mms[22m[39m
+ [32m✓[39m src/__tests__/ReportPreviewModal.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 633[2mms[22m[39m
+ [32m✓[39m src/__tests__/AllocationChart.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 576[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and allows view mode switching [33m 497[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 567[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_modals_lifecycle.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1042[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests AuthModal login/signup toggle and submit flow [33m 658[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal_interactions.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 862[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal with API key configurations and export options [33m 574[2mms[22m[39m
+ [32m✓[39m src/__tests__/Header.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 603[2mms[22m[39m
+     [33m[2m✓[22m[39m triggers action buttons when clicked [33m 322[2mms[22m[39m
+
+[31m⎯⎯⎯⎯[39m[1m[41m Unhandled Rejection [49m[22m[31m⎯⎯⎯⎯⎯[39m
+[31m[1mError[22m: Something removed the coverage directory "/app/applet/coverage/.tmp" Vitest created earlier. Make sure you are not running multiple Vitests with the same "coverage.reportsDirectory" at the same time.[39m
+[90m [2m❯[22m V8CoverageProvider.normalizeCoverageFileError node_modules/vitest/dist/chunks/coverage.DM_a_rWm.js:[2m729:128[22m[39m
+[90m [2m❯[22m node_modules/vitest/dist/chunks/coverage.DM_a_rWm.js:[2m745:15[22m[39m
+
+[31m[1mCaused by: Error[22m: ENOENT: no such file or directory, open '/app/applet/coverage/.tmp/coverage-12.json'[39m
+[90m [2m❯[22m open node:internal/fs/promises:[2m639:25[22m[39m
+[90m [2m❯[22m Object.writeFile node:internal/fs/promises:[2m1222:14[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ errno: -2, code: 'ENOENT', syscall: 'open', path: '/app/applet/coverage/.tmp/coverage-12.json' }[39m
+
+
+

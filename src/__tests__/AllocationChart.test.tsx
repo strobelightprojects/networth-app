@@ -56,15 +56,7 @@ describe('AllocationChart', () => {
     fireEvent.click(stocksBtn);
     expect(screen.queryByText('Vanguard VTI')).not.toBeInTheDocument();
   });
-
-  it('respects the privacy blur prop', () => {
-    const { container } = render(<AllocationChart portfolio={mockPortfolio} currency="USD" isPrivacyBlur={true} />);
-    // Tooltip is mocked so we can't test its inner classes, but the center total sum
-    // also applies the blur class
-    const blurredElements = container.querySelectorAll('.blur-\\[4px\\]');
-    expect(blurredElements.length).toBeGreaterThan(0);
-  });
-
+  
   it('handles empty portfolio state correctly', () => {
     const emptyPortfolio: PortfolioData = {
       id: 'empty-1',

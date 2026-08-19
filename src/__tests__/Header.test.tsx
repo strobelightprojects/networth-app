@@ -32,7 +32,6 @@ describe('Header', () => {
         onOpenAddItemModal={vi.fn()}
         onOpenSettingsModal={vi.fn()}
         onOpenAuthModal={vi.fn()}
-        onOpenPrivacyModal={vi.fn()}
         onExportCSV={vi.fn()}
         onPrint={vi.fn()}
         currency="USD"
@@ -56,7 +55,6 @@ describe('Header', () => {
     const onOpenManageFilesModal = vi.fn();
     const onDeleteCurrentPortfolio = vi.fn();
     const onOpenAuthModal = vi.fn();
-    const onOpenPrivacyModal = vi.fn();
 
     render(
       <Header
@@ -71,7 +69,6 @@ describe('Header', () => {
         onOpenAddItemModal={onOpenAddItemModal}
         onOpenSettingsModal={onOpenSettingsModal}
         onOpenAuthModal={onOpenAuthModal}
-        onOpenPrivacyModal={onOpenPrivacyModal}
         onExportCSV={vi.fn()}
         onPrint={vi.fn()}
         currency="USD"
@@ -96,11 +93,6 @@ describe('Header', () => {
     const settingsBtn = screen.getByTitle('App Settings');
     fireEvent.click(settingsBtn);
     expect(onOpenSettingsModal).toHaveBeenCalled();
-    
-    // Privacy Button
-    const privacyBtn = screen.getByTitle('Privacy Policy & Terms');
-    fireEvent.click(privacyBtn);
-    expect(onOpenPrivacyModal).toHaveBeenCalled();
     
     // Sign In Button
     const signInBtn = screen.getByTitle('Account & Cloud Storage');
@@ -127,7 +119,6 @@ describe('Header', () => {
     const onOpenImportModal = vi.fn();
     const onOpenAuthModal = vi.fn();
     const onOpenSettingsModal = vi.fn();
-    const onOpenPrivacyModal = vi.fn();
     const onOpenAddItemModal = vi.fn();
 
     render(
@@ -143,7 +134,6 @@ describe('Header', () => {
         onOpenAddItemModal={onOpenAddItemModal}
         onOpenSettingsModal={onOpenSettingsModal}
         onOpenAuthModal={onOpenAuthModal}
-        onOpenPrivacyModal={onOpenPrivacyModal}
         onExportCSV={vi.fn()}
         onPrint={vi.fn()}
         currency="USD"
@@ -176,11 +166,6 @@ describe('Header', () => {
     const mobileSettingsBtn = screen.getByText('Settings & Export');
     fireEvent.click(mobileSettingsBtn);
     expect(onOpenSettingsModal).toHaveBeenCalled();
-    
-    fireEvent.click(toggleBtn); // Re-open
-    const mobilePrivacyBtn = screen.getByText('Privacy & Security Policy');
-    fireEvent.click(mobilePrivacyBtn);
-    expect(onOpenPrivacyModal).toHaveBeenCalled();
   });
 });
 

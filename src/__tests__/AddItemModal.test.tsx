@@ -174,5 +174,74 @@ describe('AddItemModal', () => {
       })
     );
   });
+
+  it('selects existing categories and auto updates type', () => {
+    const onAddItem = vi.fn();
+    render(
+      <AddItemModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onAddItem={onAddItem}
+        baseCurrency="USD"
+      />
+    );
+    const categorySelect = screen.getAllByRole('combobox')[0];
+    fireEvent.change(categorySelect, { target: { value: 'Mortgage' } });
+    
+    // Type should now be liability, meaning name placeholder changes
+    expect(screen.getByPlaceholderText(/UK Mortgage/)).toBeInTheDocument();
+
+    fireEvent.change(categorySelect, { target: { value: 'Disability Insurance' } });
+    // Type should now be insurance
+    expect(screen.getByPlaceholderText(/Term Life \$1M/)).toBeInTheDocument();
+
+    fireEvent.change(categorySelect, { target: { value: 'Real Estate' } });
+    expect(screen.getByPlaceholderText(/Vanguard 401k/)).toBeInTheDocument();
+  });
+
+  it('renders custom categories if existing items have them', () => {
+    const onAddItem = vi.fn();
+    render(
+      <AddItemModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onAddItem={onAddItem}
+        baseCurrency="USD"
+        existingItems={[
+          {
+            id: '1',
+            name: 'Rolex',
+            type: 'asset',
+            value: 10000,
+            currency: 'USD',
+            category: 'Watches', // Custom category
+            lastUpdated: new Date().toISOString()
+          }
+        ]}
+      />
+    );
+
+    const categorySelect = screen.getAllByRole('combobox')[0];
+    expect(categorySelect.innerHTML).toContain('Your Custom Categories');
+    expect(categorySelect.innerHTML).toContain('Watches');
+  });
+
+  it('changes item date', () => {
+    const onAddItem = vi.fn();
+    render(
+      <AddItemModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onAddItem={onAddItem}
+        baseCurrency="USD"
+      />
+    );
+
+    const dateInput = document.querySelector('input[type="date"]');
+    if (dateInput) {
+      fireEvent.change(dateInput, { target: { value: '2023-01-01' } });
+      expect((dateInput as HTMLInputElement).value).toBe('2023-01-01');
+    }
+  });
 });
 

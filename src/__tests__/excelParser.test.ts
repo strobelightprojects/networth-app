@@ -1,8 +1,39 @@
 import { describe, it, expect } from 'vitest';
-import { extractDateFromFilename, suggestColumnMapping, convertRowsToItems, parseCSVText, parseDateString, detectGlobalDateFromSheet } from '../utils/excelParser';
+import { extractDateFromFilename, suggestColumnMapping, convertRowsToItems, parseCSVText, parseDateString, detectGlobalDateFromSheet, inferCategory } from '../utils/excelParser';
 import { ColumnMapping } from '../types';
 
 describe('excelParser', () => {
+  describe('inferCategory', () => {
+    it('infers insurance categories', () => {
+      expect(inferCategory('Term Life', '', 'insurance')).toBe('Term Life Insurance');
+      expect(inferCategory('Whole Life', '', 'insurance')).toBe('Whole Life Insurance');
+      expect(inferCategory('Universal Life', '', 'insurance')).toBe('Universal Life Insurance');
+      expect(inferCategory('AFLAC Disability', '', 'insurance')).toBe('Disability Insurance');
+      expect(inferCategory('Long-term Care', '', 'insurance')).toBe('Health & Long-Term Care');
+      expect(inferCategory('Random Ins', '', 'insurance')).toBe('Term Life Insurance'); // default fallback
+    });
+
+    it('infers liability categories', () => {
+      expect(inferCategory('Primary Mortgage', '', 'liability')).toBe('Mortgage');
+      expect(inferCategory('Visa Credit Card', '', 'liability')).toBe('Credit Cards');
+      expect(inferCategory('Student Loan', '', 'liability')).toBe('Student Loans');
+      expect(inferCategory('Auto Loan', '', 'liability')).toBe('Auto Loans');
+      expect(inferCategory('Personal Loan', '', 'liability')).toBe('Personal Loans');
+      expect(inferCategory('Random Debt', '', 'liability')).toBe('Other Liabilities'); // default fallback
+    });
+
+    it('infers asset categories', () => {
+      expect(inferCategory('Vanguard S&P 500 Index Fund', '', 'asset')).toBe('Stocks & ETFs');
+      expect(inferCategory('Rental Property', '', 'asset')).toBe('Real Estate');
+      expect(inferCategory('Roth IRA', '', 'asset')).toBe('Retirement (401k/IRA)');
+      expect(inferCategory('Chase Checking Account', '', 'asset')).toBe('Cash & Equivalents');
+      expect(inferCategory('Bitcoin Wallet', '', 'asset')).toBe('Crypto');
+      expect(inferCategory('US Treasury Bonds', '', 'asset')).toBe('Bonds & Fixed Income');
+      expect(inferCategory('Tesla Model 3', '', 'asset')).toBe('Vehicle & Physical');
+      expect(inferCategory('Angel Investment', '', 'asset')).toBe('Alternative & Private'); // default fallback
+    });
+  });
+
   describe('parseDateString', () => {
     it('parses YYYY-MM-DD', () => {
       expect(parseDateString('2024-05-15')).toBe('2024-05-15');

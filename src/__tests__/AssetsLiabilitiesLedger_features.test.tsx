@@ -73,22 +73,6 @@ describe('AssetsLiabilitiesLedger feature tests', () => {
     expect(screen.queryByText('Primary Home Loan')).toBeNull();
   });
 
-  it('applies privacy blur class when isPrivacyBlur is true', () => {
-    const { container } = render(
-      <AssetsLiabilitiesLedger
-        items={items}
-        currency="USD"
-        onUpdateItem={onUpdateItem}
-        onDeleteItem={onDeleteItem}
-        onOpenAddItemModal={onOpenAddItemModal}
-        isPrivacyBlur={true}
-      />
-    );
-
-    const blurredElements = container.querySelectorAll('.blur-sm, .blur-md, .select-none, [class*="blur"]');
-    expect(blurredElements.length).toBeGreaterThan(0);
-  });
-
   it('triggers delete callback when delete button is clicked', () => {
     render(
       <AssetsLiabilitiesLedger

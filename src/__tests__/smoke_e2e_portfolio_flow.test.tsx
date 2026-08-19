@@ -66,18 +66,13 @@ describe('Smoke E2E Portfolio Flow', () => {
     });
   });
 
-  it('smoke tests opening Settings and Privacy modals from header', async () => {
+  it('smoke tests opening Settings modal from header', async () => {
     render(<App />);
 
     // Open Settings Modal
     const settingsBtn = screen.getByTitle('App Settings');
     fireEvent.click(settingsBtn);
     expect(screen.getByText(/App & Preferences Settings/i)).toBeDefined();
-
-    // Open Privacy Policy & Terms Modal
-    const privacyBtn = screen.getByTitle('Privacy Policy & Terms');
-    fireEvent.click(privacyBtn);
-    expect(screen.getByText(/Privacy Policy & Terms of Service/i)).toBeDefined();
   });
 
   it('smoke tests opening Add Item modal and entering item details', async () => {

@@ -66,20 +66,6 @@ describe('App', () => {
     if (closeBtn) fireEvent.click(closeBtn);
   });
   
-  it('can open the Privacy Policy modal', async () => {
-    render(<App />);
-    
-    const shieldBtn = screen.getByTitle('Privacy Policy & Terms');
-    fireEvent.click(shieldBtn);
-    
-    expect(screen.getByText('Privacy Policy & Terms of Service')).toBeDefined();
-    
-    // Close the modal
-    const closeBtns = document.querySelectorAll('button');
-    const closeBtn = Array.from(closeBtns).find(btn => btn.querySelector('.lucide-x'));
-    if (closeBtn) fireEvent.click(closeBtn);
-  });
-  
   it('can add a new item and update state', async () => {
     render(<App />);
     

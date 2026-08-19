@@ -59,7 +59,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         setError('Google Sign-in pop-up was blocked by the browser or embedded iframe preview. You can open the app in a new tab, or sign in using Email/Password or Instant Guest Mode.');
       } else if (err.code === 'auth/unauthorized-domain') {
-        setError('This domain is not authorized for Google OAuth yet. You can sign in using Email & Password or Instant Guest Mode.');
+        setError('unauthorized-domain: This domain is not authorized for Google OAuth yet. You can sign in using Email & Password or Instant Guest Mode.');
       } else {
         setError(err.message || 'Failed to sign in with Google');
       }
@@ -165,7 +165,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   Google Auth requires this hosting domain to be added to Firebase Console under <strong>Authentication &gt; Settings &gt; Authorized domains</strong>.
                 </>
               ) : (
-                error
+                error.replace('unauthorized-domain: ', '')
               )}
             </p>
 

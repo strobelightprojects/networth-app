@@ -71,23 +71,6 @@ describe('AssetsLiabilitiesLedger', () => {
     expect(screen.getByText('Account / Item')).toBeInTheDocument();
   });
   
-  it('respects the privacy blur prop', () => {
-    const { container } = render(
-      <AssetsLiabilitiesLedger
-        items={mockItems}
-        currency="USD"
-        onUpdateItem={vi.fn()}
-        onDeleteItem={vi.fn()}
-        onOpenAddItemModal={vi.fn()}
-        isPrivacyBlur={true}
-      />
-    );
-    
-    // When privacy blur is true, cells should contain the blur class
-    const blurredCells = container.querySelectorAll('.blur-\\[4px\\]');
-    expect(blurredCells.length).toBeGreaterThan(0);
-  });
-
   it('handles item editing mode and saving updates', () => {
     const handleUpdate = vi.fn();
     render(

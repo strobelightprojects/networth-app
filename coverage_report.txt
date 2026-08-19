@@ -1,0 +1,188 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/app/applet[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 2852[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and filters items by text search [33m 394[2mms[22m[39m
+     [33m[2m✓[22m[39m allows toggling item exclusion and breakdown view [33m 473[2mms[22m[39m
+     [33m[2m✓[22m[39m allows sorting columns [33m 318[2mms[22m[39m
+     [33m[2m✓[22m[39m supports item selection and bulk delete operations [33m 905[2mms[22m[39m
+ [32m✓[39m src/__tests__/App.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1747[2mms[22m[39m
+     [33m[2m✓[22m[39m renders without crashing and can interact with modals [33m 705[2mms[22m[39m
+     [33m[2m✓[22m[39m can add a new item and update state [33m 382[2mms[22m[39m
+     [33m[2m✓[22m[39m can delete an item [33m 455[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_e2e_portfolio_flow.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1305[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests opening Manage Portfolios and creating a new portfolio file [33m 931[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1275[2mms[22m[39m
+     [33m[2m✓[22m[39m supports creating custom categories [33m 334[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 710[2mms[22m[39m
+ [32m✓[39m src/__tests__/ReportPreviewModal.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 602[2mms[22m[39m
+ [32m✓[39m src/__tests__/AllocationChart.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 566[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and allows view mode switching [33m 486[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_modals_lifecycle.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 675[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests AuthModal login/signup toggle and submit flow [33m 413[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 698[2mms[22m[39m
+     [33m[2m✓[22m[39m allows creating a new portfolio file [33m 382[2mms[22m[39m
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger_features.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 615[2mms[22m[39m
+     [33m[2m✓[22m[39m renders all accounts across assets, liabilities, and insurance [32m 300[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 518[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal_interactions.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 555[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal with API key configurations and export options [33m 330[2mms[22m[39m
+ [32m✓[39m src/__tests__/AuthModal.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 586[2mms[22m[39m
+     [33m[2m✓[22m[39m handles sign in with email correctly [33m 324[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal_validation.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 713[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal when open and allows switching between Asset, Liability, and Insurance [33m 536[2mms[22m[39m
+ [32m✓[39m src/__tests__/Header.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 527[2mms[22m[39m
+[90mstderr[2m | src/__tests__/AuthModal_functions.test.tsx[2m > [22m[2mAuthModal functions[2m > [22m[2mdisplays error if Google auth fails with unauthorized domain
+[22m[39mGoogle auth error: { code: [32m'auth/unauthorized-domain'[39m }
+
+ [32m✓[39m src/__tests__/AuthModal_functions.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 405[2mms[22m[39m
+ [32m✓[39m src/__tests__/ColumnMapperModal.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 321[2mms[22m[39m
+ [32m✓[39m src/__tests__/KPICards.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 196[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal_interactions.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 314[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal_functions.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 248[2mms[22m[39m
+[90mstderr[2m | src/__tests__/NetWorthChart.test.tsx[2m > [22m[2mNetWorthChart[2m > [22m[2mrenders correctly
+[22m[39mThe tag <stop> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+The tag <linearGradient> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+The tag <defs> is unrecognized in this browser. If you meant to render a React component, start its name with an uppercase letter.
+
+[90mstderr[2m | src/__tests__/NetWorthChart.test.tsx[2m > [22m[2mNetWorthChart[2m > [22m[2mrespects the privacy blur prop
+[22m[39m<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+[90mstderr[2m | src/__tests__/NetWorthChart.test.tsx[2m > [22m[2mNetWorthChart[2m > [22m[2mhandles empty historical state correctly
+[22m[39m<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+[90mstderr[2m | src/__tests__/NetWorthChart.test.tsx[2m > [22m[2mcan toggle timeframe and chart modes
+[22m[39m<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+An update to NetWorthChart inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NetWorthChart inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NetWorthChart inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+<linearGradient /> is using incorrect casing. Use PascalCase for React components, or lowercase for HTML elements.
+
+ [32m✓[39m src/__tests__/NetWorthChart.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 159[2mms[22m[39m
+ [32m✓[39m src/__tests__/formatters_extended.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_financial_engine.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+[90mstderr[2m | src/__tests__/currency.test.ts[2m > [22m[2mcurrency utilities[2m > [22m[2mfetchLiveExchangeRates[2m > [22m[2mfalls back to default rates if network fails
+[22m[39mFailed to fetch live FX rates from backend API, falling back to client fetch Error: Network error
+    at [90m/app/applet/[39msrc/__tests__/currency.test.ts:84:56
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2956:64
+
+[90mstderr[2m | src/__tests__/currency.test.ts[2m > [22m[2mcurrency utilities[2m > [22m[2mfetchLiveExchangeRates[2m > [22m[2mfalls back to default rates if network fails
+[22m[39mDirect FX API fetch failed, using default rates Error: Network error
+    at [90m/app/applet/[39msrc/__tests__/currency.test.ts:84:56
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2956:64
+
+ [32m✓[39m src/__tests__/currency.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+ [32m✓[39m src/__tests__/excelParser_multisection.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/__tests__/formatters.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32m✓[39m src/__tests__/excelParser.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32m✓[39m src/__tests__/itemHelpers_extended.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/__tests__/itemHelpers.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+[90mstderr[2m | src/__tests__/geminiCategoryService.test.ts[2m > [22m[2mgeminiCategoryService[2m > [22m[2mfalls back to local heuristic matching if API fetch fails
+[22m[39mGemini API category suggestion endpoint failed, using local heuristic fallback: Error: Network error
+    at [90m/app/applet/[39msrc/__tests__/geminiCategoryService.test.ts:38:46
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:302:11
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:1903:26
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel [90m(file:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2323:10[90m)[39m
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2272:10[90m)[39m
+    at [90mfile:///app/applet/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-artifact.js:2956:64
+
+ [32m✓[39m src/__tests__/geminiCategoryService.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32m✓[39m src/__tests__/aiCategorySuggester.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32m✓[39m src/__tests__/firebase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/__tests__/samplePortfolios.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m33 passed[39m[22m[90m (33)[39m
+[2m      Tests [22m [1m[32m196 passed[39m[22m[90m (196)[39m
+[2m   Start at [22m 20:16:18
+[2m   Duration [22m 101.47s[2m (transform 1.29s, setup 9.58s, import 11.34s, tests 15.90s, environment 49.03s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   72.44 |    65.49 |   69.92 |   74.45 |                   
+ applet            |       0 |        0 |       0 |       0 |                   
+  ...t-config.json |       0 |        0 |       0 |       0 |                   
+ applet/src        |   28.94 |    20.66 |   28.18 |   32.19 |                   
+  App.tsx          |   28.94 |    20.66 |   28.18 |   32.19 | ...26-731,739-752 
+ ...src/components |     100 |      100 |     100 |     100 |                   
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ponents/charts |   82.82 |       70 |      80 |   82.51 |                   
+  ...tionChart.tsx |   86.84 |    76.27 |   86.11 |   85.48 | ...17,138,192-204 
+  ...orthChart.tsx |   78.82 |    62.74 |   68.42 |   79.74 | ...30,156,220-301 
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ents/dashboard |   74.52 |    70.85 |   73.41 |   72.69 |                   
+  ...iesLedger.tsx |   71.16 |       70 |   70.42 |   68.84 | ...1420,1471,1611 
+  Header.tsx       |     100 |    81.25 |     100 |     100 | 131,201-206       
+  KPICards.tsx     |     100 |    78.57 |     100 |     100 | 41,63-67          
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ponents/modals |   85.24 |    73.53 |   84.31 |   86.74 |                   
+  AddItemModal.tsx |   79.64 |    77.21 |    87.5 |    80.9 | ...04-206,309-311 
+  AuthModal.tsx    |   79.16 |    56.92 |   76.92 |   82.35 | ...23,182-185,295 
+  ...pperModal.tsx |   82.35 |    83.58 |   78.57 |   82.22 | ...51,168,185,202 
+  ImportModal.tsx  |   85.49 |    74.55 |   82.35 |   86.93 | ...87-389,507,609 
+  ...ilesModal.tsx |   92.15 |       90 |   86.95 |   93.33 | 148,190,237       
+  ...viewModal.tsx |   91.11 |    79.41 |   89.47 |   97.05 | 121               
+  ...ingsModal.tsx |   95.45 |    63.93 |   91.66 |   95.34 | 232-233           
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ applet/src/data   |     100 |      100 |     100 |     100 |                   
+  ...Portfolios.ts |     100 |      100 |     100 |     100 |                   
+ applet/src/lib    |   85.57 |    86.84 |   85.71 |   85.56 |                   
+  firebase.ts      |   85.57 |    86.84 |   85.71 |   85.56 | ...88,203,212,222 
+ applet/src/utils  |   79.71 |     64.7 |   91.11 |   84.17 |                   
+  ...ySuggester.ts |     100 |      100 |     100 |     100 |                   
+  currency.ts      |    75.3 |    58.06 |     100 |   82.35 | ...10-111,143-156 
+  excelParser.ts   |   77.63 |    63.33 |   86.95 |   82.28 | ...21-536,586-588 
+  formatters.ts    |    92.3 |      100 |     100 |    92.3 | 44                
+  ...oryService.ts |   73.33 |     62.5 |      80 |      75 | 41-45,74-75,106   
+  itemHelpers.ts   |   96.07 |    79.54 |     100 |   97.77 | 96                
+-------------------|---------|----------|---------|---------|-------------------

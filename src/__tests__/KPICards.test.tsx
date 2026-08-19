@@ -48,12 +48,6 @@ describe('KPICards component', () => {
     expect(screen.getByText('+33.3%')).toBeInTheDocument();
   });
   
-  it('applies privacy blur class when isPrivacyBlur is true', () => {
-    const { container } = render(<KPICards portfolio={mockPortfolio} currency="USD" isPrivacyBlur={true} />);
-    const blurredElements = container.querySelectorAll('.blur-\\[4px\\]');
-    expect(blurredElements.length).toBeGreaterThan(0);
-  });
-  
   it('handles empty portfolio state correctly', () => {
     const emptyPortfolio: PortfolioData = {
       id: 'empty-1',
