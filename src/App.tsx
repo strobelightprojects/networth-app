@@ -14,7 +14,8 @@ import {
   SettingsModal, 
   AuthModal, 
   PrivacyModal,
-  ReportPreviewModal
+  ReportPreviewModal,
+  ScreenLockOverlay
 } from './components';
 import { auth, subscribeUserPortfolios, saveUserPortfolioToFirestore, deleteUserPortfolioFromFirestore, syncAllPortfoliosToFirestore } from './lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -79,8 +80,79 @@ export default function App() {
 
   const isFirestoreUpdateRef = useRef<boolean>(false);
 
-  // Listen to Auth state changes and subscribe to Firestore portfolios
-  const [isPrivacyBlur, setIsPrivacyBlur] = useState<boolean>(false);
+  // Privacy & Screen Lock state
+  const [isPrivacyBlur, setIsPrivacyBlur] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('defaultPrivacyBlur') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [requireScreenLock, setRequireScreenLock] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('requireScreenLock') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isScreenLocked, setIsScreenLocked] = useState<boolean>(false);
+  const [lockedAt, setLockedAt] = useState<Date | null>(null);
+  const lastActivityTimestampRef = useRef<number>(Date.now());
+
+  // Inactivity tracking for Screen Lock (5 minutes timeout)
+  useEffect(() => {
+    if (!requireScreenLock) {
+      setIsScreenLocked(false);
+      return;
+    }
+
+    lastActivityTimestampRef.current = Date.now();
+
+    const recordActivity = () => {
+      if (!isScreenLocked) {
+        lastActivityTimestampRef.current = Date.now();
+      }
+    };
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'pointerdown'];
+    activityEvents.forEach((ev) => window.addEventListener(ev, recordActivity, { passive: true }));
+
+    const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+    const intervalId = setInterval(() => {
+      if (requireScreenLock && !isScreenLocked) {
+        const elapsed = Date.now() - lastActivityTimestampRef.current;
+        if (elapsed >= INACTIVITY_TIMEOUT_MS) {
+          setIsScreenLocked(true);
+          setLockedAt(new Date());
+        }
+      }
+    }, 5000);
+
+    return () => {
+      activityEvents.forEach((ev) => window.removeEventListener(ev, recordActivity));
+      clearInterval(intervalId);
+    };
+  }, [requireScreenLock, isScreenLocked]);
+
+  const handleLockScreenNow = () => {
+    setIsScreenLocked(true);
+    setLockedAt(new Date());
+  };
+
+  const handleUnlockScreen = () => {
+    setIsScreenLocked(false);
+    lastActivityTimestampRef.current = Date.now();
+  };
+
+  const handleUpdatePrivacySettings = (settings: { requireScreenLock: boolean; defaultPrivacyBlur: boolean }) => {
+    setRequireScreenLock(settings.requireScreenLock);
+    if (settings.defaultPrivacyBlur) {
+      setIsPrivacyBlur(true);
+    }
+  };
 
   useEffect(() => {
     let unsubFirestore: (() => void) | null = null;
@@ -642,6 +714,8 @@ export default function App() {
         currentUser={currentUser}
         isPrivacyBlur={isPrivacyBlur}
         onTogglePrivacyBlur={() => setIsPrivacyBlur(!isPrivacyBlur)}
+        requireScreenLock={requireScreenLock}
+        onLockScreen={handleLockScreenNow}
       />
 
       {/* Main Content Dashboard */}
@@ -777,6 +851,8 @@ export default function App() {
         onExportCSV={handleExportCSV}
         onPrint={handlePrint}
         onPreviewReport={() => setIsReportPreviewOpen(true)}
+        onUpdatePrivacySettings={handleUpdatePrivacySettings}
+        onLockScreenNow={handleLockScreenNow}
       />
 
       <ReportPreviewModal
@@ -799,6 +875,14 @@ export default function App() {
         isOpen={isPrivacyModalOpen}
         onClose={() => setIsPrivacyModalOpen(false)}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+      />
+
+      <ScreenLockOverlay
+        isLocked={isScreenLocked}
+        currentUser={currentUser}
+        onUnlock={handleUnlockScreen}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        lockedAt={lockedAt}
       />
 
     </div>

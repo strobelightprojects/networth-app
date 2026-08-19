@@ -6,3 +6,4 @@ export * from './ManageFilesModal';
 export * from './PrivacyModal';
 export * from './ReportPreviewModal';
 export * from './SettingsModal';
+export * from './ScreenLockOverlay';

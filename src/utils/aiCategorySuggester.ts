@@ -5,322 +5,573 @@ export interface CategorySuggestion {
   suggestedType: ItemType;
   confidence: 'high' | 'medium' | 'low';
   matchedKeyword: string;
+  matchedRule?: string;
+}
+
+export interface KeywordCategoryMapping {
+  keywords: string[];
+  suggestedCategory: AssetCategory | LiabilityCategory | InsuranceCategory;
+  suggestedType: ItemType;
+  confidence: 'high' | 'medium' | 'low';
+  description: string;
 }
 
 /**
- * Heuristic AI engine to infer asset/liability category based on account name
+ * Keyword Mapping Dictionary for auto-categorization of manual ledger items.
+ * Ordered by precedence (Insurance policies -> Specific Liabilities -> Specific Assets -> Broader Cash/Investments).
+ */
+export const KEYWORD_CATEGORY_DICTIONARY: KeywordCategoryMapping[] = [
+  // --- Insurance Policies ---
+  {
+    keywords: [
+      'whole life',
+      'cash value life',
+      'permanent life',
+    ],
+    suggestedCategory: 'Whole Life Insurance',
+    suggestedType: 'insurance',
+    confidence: 'high',
+    description: 'Whole Life insurance policies',
+  },
+  {
+    keywords: [
+      'universal life',
+      'variable universal',
+      'indexed universal',
+      'iul',
+    ],
+    suggestedCategory: 'Universal Life Insurance',
+    suggestedType: 'insurance',
+    confidence: 'high',
+    description: 'Universal Life insurance policies',
+  },
+  {
+    keywords: [
+      'disability insurance',
+      'long term disability',
+      'short term disability',
+      'ltd policy',
+      'guardian disability',
+    ],
+    suggestedCategory: 'Disability Insurance',
+    suggestedType: 'insurance',
+    confidence: 'high',
+    description: 'Disability insurance coverage',
+  },
+  {
+    keywords: [
+      'health insurance',
+      'long-term care',
+      'long term care',
+      'ltc insurance',
+      'medicare supplement',
+    ],
+    suggestedCategory: 'Health & Long-Term Care',
+    suggestedType: 'insurance',
+    confidence: 'high',
+    description: 'Health & Long-Term Care insurance',
+  },
+  {
+    keywords: [
+      'umbrella policy',
+      'umbrella insurance',
+      'liability umbrella',
+      'property insurance',
+      'homeowners policy',
+      'hazard policy',
+    ],
+    suggestedCategory: 'Property & Umbrella',
+    suggestedType: 'insurance',
+    confidence: 'high',
+    description: 'Property & Umbrella liability coverage',
+  },
+  {
+    keywords: [
+      'term life',
+      'life insurance',
+      'death benefit',
+      'policy coverage',
+      'prudential',
+      'northwestern mutual',
+      'new york life',
+      'metlife',
+      'lincoln financial',
+      'massmutual',
+      'pacific life',
+      'guardian life',
+    ],
+    suggestedCategory: 'Term Life Insurance',
+    suggestedType: 'insurance',
+    confidence: 'high',
+    description: 'Term Life Insurance and general death benefits',
+  },
+
+  // --- Liabilities & Debts ---
+  {
+    keywords: [
+      'mortgage',
+      'home loan',
+      'housing loan',
+      'house loan',
+      'rocket mortgage',
+      'fannie mae',
+      'freddie mac',
+      'quicken loans',
+      'pennymac',
+      'mr cooper',
+      'wells fargo mortgage',
+      'chase mortgage',
+      'primary mortgage',
+      'secondary mortgage',
+    ],
+    suggestedCategory: 'Mortgage',
+    suggestedType: 'liability',
+    confidence: 'high',
+    description: 'Home mortgage and real estate debt',
+  },
+  {
+    keywords: [
+      'credit card',
+      'visa',
+      'mastercard',
+      'amex',
+      'american express',
+      'sapphire',
+      'freedom',
+      'card balance',
+      'apple card',
+      'discover card',
+      'discover it',
+      'citi double',
+      'citi custom',
+      'capital one venture',
+      'capital one quicksilver',
+      'chase sapphire',
+      'barclays card',
+      'credit line',
+    ],
+    suggestedCategory: 'Credit Cards',
+    suggestedType: 'liability',
+    confidence: 'high',
+    description: 'Credit cards and revolving charge accounts',
+  },
+  {
+    keywords: [
+      'student loan',
+      'student loans',
+      'nelnet',
+      'edfinancial',
+      'navient',
+      'aidvantage',
+      'mohela',
+      'tuition loan',
+      'sallie mae',
+      'great lakes',
+      'fafsa loan',
+      'stafford loan',
+      'direct unsubsidized',
+      'direct subsidized',
+    ],
+    suggestedCategory: 'Student Loans',
+    suggestedType: 'liability',
+    confidence: 'high',
+    description: 'Student and higher-education loans',
+  },
+  {
+    keywords: [
+      'auto loan',
+      'car loan',
+      'vehicle loan',
+      'car finance',
+      'car lease',
+      'honda financial',
+      'toyota financial',
+      'ford credit',
+      'tesla finance',
+      'gm financial',
+      'bmw financial',
+      'hyundai motor finance',
+      'nissan finance',
+      'ally auto',
+    ],
+    suggestedCategory: 'Auto Loans',
+    suggestedType: 'liability',
+    confidence: 'high',
+    description: 'Automobile and vehicle loans',
+  },
+  {
+    keywords: [
+      'personal loan',
+      'sofi loan',
+      'lendingclub',
+      'prosper loan',
+      'upstart',
+      'marcus loan',
+      'best egg',
+      'debt consolidation',
+      'installment loan',
+      'unsecured loan',
+      'line of credit',
+      'heloc',
+      'home equity line',
+    ],
+    suggestedCategory: 'Personal Loans',
+    suggestedType: 'liability',
+    confidence: 'high',
+    description: 'Personal loans, HELOCs, and credit lines',
+  },
+  {
+    keywords: [
+      'loan',
+      'debt',
+      'payable',
+      'liability',
+      'owe',
+      'borrowed',
+      'promissory note',
+      'tax debt',
+      'irs payment plan',
+      'medical debt',
+    ],
+    suggestedCategory: 'Other Liabilities',
+    suggestedType: 'liability',
+    confidence: 'medium',
+    description: 'General debts and liabilities',
+  },
+
+  // --- Assets: Retirement ---
+  {
+    keywords: [
+      '401k',
+      '401(k)',
+      'ira',
+      'roth',
+      'roth ira',
+      'traditional ira',
+      'sep ira',
+      'simple ira',
+      'pension',
+      '403b',
+      '403(b)',
+      '457',
+      '457b',
+      'superannuation',
+      'retirement',
+      'tsp',
+      'thrift savings',
+      'vanguard target retirement',
+      'fidelity freedom',
+    ],
+    suggestedCategory: 'Retirement (401k/IRA)',
+    suggestedType: 'asset',
+    confidence: 'high',
+    description: 'Tax-advantaged retirement accounts and pensions',
+  },
+
+  // --- Assets: Crypto ---
+  {
+    keywords: [
+      'crypto',
+      'bitcoin',
+      'btc',
+      'ethereum',
+      'eth',
+      'binance',
+      'coinbase',
+      'solana',
+      'sol',
+      'cardano',
+      'ada',
+      'wallet',
+      'ledger nano',
+      'trezor',
+      'kraken',
+      'metamask',
+      'phantom wallet',
+      'coldcard',
+      'ripple',
+      'xrp',
+      'usdt',
+      'usdc',
+      'polygon',
+      'matic',
+      'avalanche',
+      'avax',
+      'dogecoin',
+      'doge',
+      'chainlink',
+      'uniswap',
+    ],
+    suggestedCategory: 'Crypto',
+    suggestedType: 'asset',
+    confidence: 'high',
+    description: 'Cryptocurrencies and digital assets',
+  },
+
+  // --- Assets: Real Estate ---
+  {
+    keywords: [
+      'real estate',
+      'primary home',
+      'primary residence',
+      'rental property',
+      'investment property',
+      'condo',
+      'apartment',
+      'townhouse',
+      'house',
+      'home equity',
+      'land',
+      'vacation home',
+      'commercial real estate',
+      'duplex',
+      'triplex',
+      'fourplex',
+      'zillow',
+      'redfin',
+      'villa',
+      'flat',
+      'reit',
+    ],
+    suggestedCategory: 'Real Estate',
+    suggestedType: 'asset',
+    confidence: 'high',
+    description: 'Real estate, homes, and properties',
+  },
+
+  // --- Assets: Precious Metals ---
+  {
+    keywords: [
+      'gold',
+      'silver',
+      'platinum',
+      'palladium',
+      'bullion',
+      'krugerrand',
+      'pamp',
+      'ingot',
+      'gold bar',
+      'silver bar',
+      'gold coin',
+      'silver eagle',
+      'maple leaf coin',
+      'oz gold',
+      'oz silver',
+      'precious metal',
+    ],
+    suggestedCategory: 'Precious Metals',
+    suggestedType: 'asset',
+    confidence: 'high',
+    description: 'Gold, silver, and precious metals bullion',
+  },
+
+  // --- Assets: Bonds & Fixed Income ---
+  {
+    keywords: [
+      'bond',
+      'bonds',
+      'treasury',
+      'treasuries',
+      't-bill',
+      'tbill',
+      't-note',
+      't-bond',
+      'tips',
+      'fixed income',
+      'muni',
+      'municipal bond',
+      'corporate bond',
+      'i-bond',
+      'ibond',
+      'series i',
+      'series ee',
+      'us treasury',
+      'bnd',
+      'agg',
+    ],
+    suggestedCategory: 'Bonds & Fixed Income',
+    suggestedType: 'asset',
+    confidence: 'high',
+    description: 'Government bonds, treasuries, and fixed-income assets',
+  },
+
+  // --- Assets: Vehicle & Physical ---
+  {
+    keywords: [
+      'car',
+      'auto',
+      'vehicle',
+      'truck',
+      'suv',
+      'motorcycle',
+      'tesla',
+      'toyota',
+      'honda',
+      'ford',
+      'bmw',
+      'mercedes',
+      'porsche',
+      'audi',
+      'watch',
+      'rolex',
+      'patek',
+      'audemars',
+      'omega watch',
+      'jewelry',
+      'diamond',
+      'boat',
+      'yacht',
+      'rv',
+      'camper',
+    ],
+    suggestedCategory: 'Vehicle & Physical',
+    suggestedType: 'asset',
+    confidence: 'medium',
+    description: 'Automobiles, luxury goods, and physical valuables',
+  },
+
+  // --- Assets: Alternative & Private ---
+  {
+    keywords: [
+      'startup',
+      'venture capital',
+      'private equity',
+      'hedge fund',
+      'angel investment',
+      'syndicate',
+      'private company',
+      'convertible note',
+      'safe note',
+      'equity ownership',
+      'art collection',
+      'rare wine',
+      'collectibles',
+    ],
+    suggestedCategory: 'Alternative & Private',
+    suggestedType: 'asset',
+    confidence: 'medium',
+    description: 'Private equity, venture, and alternative investments',
+  },
+
+  // --- Assets: Stocks & ETFs ---
+  {
+    keywords: [
+      'stock',
+      'stocks',
+      'etf',
+      'etfs',
+      'share',
+      'shares',
+      'equity',
+      'equities',
+      'vanguard',
+      'fidelity',
+      'schwab',
+      'charles schwab',
+      'robinhood',
+      'e*trade',
+      'etrade',
+      'td ameritrade',
+      'interactive brokers',
+      'ibkr',
+      'webull',
+      'm1 finance',
+      'wealthfront',
+      'betterment',
+      'acorns',
+      's&p',
+      's&p 500',
+      'sp500',
+      'nasdaq',
+      'dow jones',
+      'total stock',
+      'index fund',
+      'mutual fund',
+      'voo',
+      'vti',
+      'qqq',
+      'spy',
+      'vt',
+      'schd',
+      'vug',
+      'brokerage',
+      'trading account',
+      'portfolio',
+    ],
+    suggestedCategory: 'Stocks & ETFs',
+    suggestedType: 'asset',
+    confidence: 'high',
+    description: 'Equities, ETFs, index funds, and brokerage accounts',
+  },
+
+  // --- Assets: Cash & Equivalents ---
+  {
+    keywords: [
+      'checking',
+      'savings',
+      'cash',
+      'bank',
+      'hysa',
+      'high yield savings',
+      'money market',
+      'mma',
+      'certificate of deposit',
+      'cd account',
+      'revolut',
+      'wise',
+      'chase checking',
+      'chase savings',
+      'wells fargo',
+      'bank of america',
+      'bofa',
+      'citibank',
+      'capital one 360',
+      'marcus',
+      'ally bank',
+      'discover bank',
+      'sofi checking',
+      'sofi savings',
+      'deposit',
+      'emergency fund',
+      'petty cash',
+      'safe deposit',
+      'paypal balance',
+      'venmo balance',
+    ],
+    suggestedCategory: 'Cash & Equivalents',
+    suggestedType: 'asset',
+    confidence: 'high',
+    description: 'Checking, savings, money market, and liquid cash',
+  },
+];
+
+/**
+ * Heuristic auto-categorization engine that matches an account/item name against
+ * the keyword mapping dictionary to infer the appropriate category and type.
  */
 export function suggestCategoryFromAccountName(
   accountName: string,
-  
 ): CategorySuggestion | null {
   if (!accountName || accountName.trim().length < 2) {
     return null;
   }
 
-  const text = `${accountName}`.toLowerCase().trim();
+  const text = accountName.toLowerCase().trim();
 
-  // 0. Insurance Policy / Death Benefit checks first
-  if (
-    text.includes('term life') ||
-    text.includes('life insurance') ||
-    text.includes('death benefit') ||
-    text.includes('whole life') ||
-    text.includes('universal life') ||
-    text.includes('policy coverage') ||
-    text.includes('prudential') ||
-    text.includes('northwestern mutual') ||
-    text.includes('new york life') ||
-    text.includes('metlife') ||
-    text.includes('disability insurance') ||
-    text.includes('umbrella policy')
-  ) {
-    let cat: InsuranceCategory = 'Term Life Insurance';
-    if (text.includes('whole life')) cat = 'Whole Life Insurance';
-    else if (text.includes('universal life')) cat = 'Universal Life Insurance';
-    else if (text.includes('disability')) cat = 'Disability Insurance';
-    else if (text.includes('health') || text.includes('care')) cat = 'Health & Long-Term Care';
-    else if (text.includes('umbrella') || text.includes('property')) cat = 'Property & Umbrella';
-
-    return {
-      suggestedCategory: cat,
-      suggestedType: 'insurance',
-      confidence: 'high',
-      matchedKeyword: 'insurance / death benefit',
-    };
-  }
-
-  // 1. Debt & Liabilities checks next
-  if (
-    text.includes('mortgage') ||
-    text.includes('home loan') ||
-    text.includes('housing loan') ||
-    text.includes('house loan')
-  ) {
-    return {
-      suggestedCategory: 'Mortgage',
-      suggestedType: 'liability',
-      confidence: 'high',
-      matchedKeyword: 'mortgage / home loan',
-    };
-  }
-
-  if (
-    text.includes('credit card') ||
-    text.includes('visa') ||
-    text.includes('mastercard') ||
-    text.includes('amex') ||
-    text.includes('american express') ||
-    text.includes('sapphire') ||
-    text.includes('freedom') ||
-    text.includes('card balance') ||
-    text.includes('apple card') ||
-    text.includes('discover card')
-  ) {
-    return {
-      suggestedCategory: 'Credit Cards',
-      suggestedType: 'liability',
-      confidence: 'high',
-      matchedKeyword: 'credit card',
-    };
-  }
-
-  if (
-    text.includes('student') ||
-    text.includes('nelnet') ||
-    text.includes('edfinancial') ||
-    text.includes('navient') ||
-    text.includes('aidvantage') ||
-    text.includes('mohela') ||
-    text.includes('tuition')
-  ) {
-    return {
-      suggestedCategory: 'Student Loans',
-      suggestedType: 'liability',
-      confidence: 'high',
-      matchedKeyword: 'student loan',
-    };
-  }
-
-  if (
-    text.includes('auto loan') ||
-    text.includes('car loan') ||
-    text.includes('vehicle loan') ||
-    text.includes('honda financial') ||
-    text.includes('toyota financial') ||
-    text.includes('ford credit')
-  ) {
-    return {
-      suggestedCategory: 'Auto Loans',
-      suggestedType: 'liability',
-      confidence: 'high',
-      matchedKeyword: 'auto loan',
-    };
-  }
-
-  if (
-    text.includes('loan') ||
-    text.includes('sofi') ||
-    text.includes('lendingclub') ||
-    text.includes('heloc') ||
-    text.includes('line of credit') ||
-    text.includes('debt consolidation')
-  ) {
-    return {
-      suggestedCategory: 'Personal Loans',
-      suggestedType: 'liability',
-      confidence: 'medium',
-      matchedKeyword: 'loan / debt',
-    };
-  }
-
-  // 2. Asset checks
-  if (
-    text.includes('401k') ||
-    text.includes('401(k)') ||
-    text.includes('ira') ||
-    text.includes('roth') ||
-    text.includes('pension') ||
-    text.includes('403b') ||
-    text.includes('superannuation') ||
-    text.includes('retirement') ||
-    text.includes('tsp')
-  ) {
-    return {
-      suggestedCategory: 'Retirement (401k/IRA)',
-      suggestedType: 'asset',
-      confidence: 'high',
-      matchedKeyword: 'retirement / 401k / IRA',
-    };
-  }
-
-  if (
-    text.includes('crypto') ||
-    text.includes('bitcoin') ||
-    text.includes('btc') ||
-    text.includes('ethereum') ||
-    text.includes('eth') ||
-    text.includes('binance') ||
-    text.includes('coinbase') ||
-    text.includes('solana') ||
-    text.includes('cardano') ||
-    text.includes('wallet') ||
-    text.includes('ledger') ||
-    text.includes('kraken') ||
-    text.includes('metamask')
-  ) {
-    return {
-      suggestedCategory: 'Crypto',
-      suggestedType: 'asset',
-      confidence: 'high',
-      matchedKeyword: 'crypto / blockchain',
-    };
-  }
-
-  if (
-    text.includes('house') ||
-    text.includes('home') ||
-    text.includes('apartment') ||
-    text.includes('condo') ||
-    text.includes('real estate') ||
-    text.includes('property') ||
-    text.includes('land') ||
-    text.includes('rental') ||
-    text.includes('zillow') ||
-    text.includes('villa') ||
-    text.includes('flat') ||
-    text.includes('reit')
-  ) {
-    return {
-      suggestedCategory: 'Real Estate',
-      suggestedType: 'asset',
-      confidence: 'high',
-      matchedKeyword: 'real estate / property',
-    };
-  }
-
-  if (
-    text.includes('checking') ||
-    text.includes('savings') ||
-    text.includes('cash') ||
-    text.includes('bank') ||
-    text.includes('hysa') ||
-    text.includes('money market') ||
-    text.includes('revolut') ||
-    text.includes('wise') ||
-    text.includes('chase') ||
-    text.includes('wells fargo') ||
-    text.includes('bank of america') ||
-    text.includes('capital one') ||
-    text.includes('deposit') ||
-    text.includes('emergency fund')
-  ) {
-    return {
-      suggestedCategory: 'Cash & Equivalents',
-      suggestedType: 'asset',
-      confidence: 'high',
-      matchedKeyword: 'banking / cash',
-    };
-  }
-
-  if (
-    text.includes('stock') ||
-    text.includes('etf') ||
-    text.includes('share') ||
-    text.includes('vanguard') ||
-    text.includes('fidelity') ||
-    text.includes('schwab') ||
-    text.includes('robinhood') ||
-    text.includes('index fund') ||
-    text.includes('s&p') ||
-    text.includes('nasdaq') ||
-    text.includes('equity') ||
-    text.includes('e*trade') ||
-    text.includes('interactive brokers') ||
-    text.includes('acorns') ||
-    text.includes('wealthfront') ||
-    text.includes('betterment') ||
-    text.includes('portfolio') ||
-    text.includes('trading')
-  ) {
-    return {
-      suggestedCategory: 'Stocks & ETFs',
-      suggestedType: 'asset',
-      confidence: 'high',
-      matchedKeyword: 'stocks / brokerage',
-    };
-  }
-
-  if (
-    text.includes('bond') ||
-    text.includes('treasury') ||
-    text.includes('t-bill') ||
-    text.includes('fixed income') ||
-    text.includes('muni')
-  ) {
-    return {
-      suggestedCategory: 'Bonds & Fixed Income',
-      suggestedType: 'asset',
-      confidence: 'high',
-      matchedKeyword: 'bonds / treasuries',
-    };
-  }
-
-  if (
-    text.includes('gold') ||
-    text.includes('silver') ||
-    text.includes('platinum') ||
-    text.includes('palladium') ||
-    text.includes('bullion') ||
-    text.includes('krugerrand') ||
-    text.includes('pamp') ||
-    text.includes('ingot') ||
-    text.includes('precious metal') ||
-    text.includes('metal') ||
-    text.includes(' bullion') ||
-    text.includes('oz gold') ||
-    text.includes('oz silver')
-  ) {
-    return {
-      suggestedCategory: 'Precious Metals',
-      suggestedType: 'asset',
-      confidence: 'high',
-      matchedKeyword: 'precious metals / bullion',
-    };
-  }
-
-  if (
-    text.includes('car') ||
-    text.includes('vehicle') ||
-    text.includes('auto') ||
-    text.includes('tesla') ||
-    text.includes('bmw') ||
-    text.includes('watch') ||
-    text.includes('rolex') ||
-    text.includes('jewelry') ||
-    text.includes('boat')
-  ) {
-    return {
-      suggestedCategory: 'Vehicle & Physical',
-      suggestedType: 'asset',
-      confidence: 'medium',
-      matchedKeyword: 'vehicle / physical asset',
-    };
-  }
-
-  if (
-    text.includes('startup') ||
-    text.includes('venture') ||
-    text.includes('private equity') ||
-    text.includes('hedge fund') ||
-    text.includes('angel')
-  ) {
-    return {
-      suggestedCategory: 'Alternative & Private',
-      suggestedType: 'asset',
-      confidence: 'medium',
-      matchedKeyword: 'alternative / private equity',
-    };
+  // Search keyword mappings in dictionary order
+  for (const mapping of KEYWORD_CATEGORY_DICTIONARY) {
+    for (const keyword of mapping.keywords) {
+      // Check for exact substring match or word boundary match
+      if (text.includes(keyword)) {
+        return {
+          suggestedCategory: mapping.suggestedCategory,
+          suggestedType: mapping.suggestedType,
+          confidence: mapping.confidence,
+          matchedKeyword: keyword,
+          matchedRule: mapping.description,
+        };
+      }
+    }
   }
 
   return null;

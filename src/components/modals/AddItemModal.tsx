@@ -291,7 +291,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300/80 block">
-                    {geminiReasoning ? 'Gemini AI Recommendation' : 'Suggested Category'}
+                    {geminiReasoning ? 'Gemini AI Recommendation' : `Auto-Suggested (Matched "${aiSuggestion.matchedKeyword}")`}
                   </span>
                   <span className="font-bold text-white text-xs">
                     {aiSuggestion.suggestedCategory} <span className="text-indigo-400 text-[10px]">({aiSuggestion.suggestedType.toUpperCase()})</span>

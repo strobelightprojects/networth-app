@@ -13,7 +13,9 @@ import {
   ShieldCheck,
   Menu,
   X,
-  ChevronDown
+  Eye,
+  EyeOff,
+  Lock
 } from 'lucide-react';
 import { CurrencyCode, PortfolioData } from '../../types';
 
@@ -37,6 +39,10 @@ interface HeaderProps {
   currentUser: User | null;
   theme?: string;
   onToggleTheme?: () => void;
+  isPrivacyBlur?: boolean;
+  onTogglePrivacyBlur?: () => void;
+  onLockScreen?: () => void;
+  requireScreenLock?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -55,6 +61,10 @@ export const Header: React.FC<HeaderProps> = ({
   currency,
   onChangeCurrency,
   currentUser,
+  isPrivacyBlur,
+  onTogglePrivacyBlur,
+  onLockScreen,
+  requireScreenLock,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -113,6 +123,42 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Desktop Right Controls */}
           <div className="hidden sm:flex items-center gap-2 sm:gap-3">
+            {/* Privacy Blur Quick Toggle */}
+            {onTogglePrivacyBlur && (
+              <button
+                onClick={onTogglePrivacyBlur}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                  isPrivacyBlur
+                    ? 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25'
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                }`}
+                title={isPrivacyBlur ? 'Privacy Blur Active (Click to Show Financial Values)' : 'Privacy Blur Off (Click to Hide Numbers)'}
+              >
+                {isPrivacyBlur ? (
+                  <>
+                    <EyeOff className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="hidden md:inline font-semibold">Privacy Active</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                    <span className="hidden md:inline">Hide Numbers</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Lock Screen Button (if Screen Lock enabled) */}
+            {requireScreenLock && onLockScreen && (
+              <button
+                onClick={onLockScreen}
+                className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                title="Lock Screen Now"
+              >
+                <Lock className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+              </button>
+            )}
+
             {/* Import Spreadsheet Button */}
             <button
               onClick={onOpenImportModal}
@@ -176,6 +222,21 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Mobile Direct Quick Action + Menu Toggle */}
           <div className="flex sm:hidden items-center gap-1.5">
+            {/* Quick Privacy Toggle on Mobile */}
+            {onTogglePrivacyBlur && (
+              <button
+                onClick={onTogglePrivacyBlur}
+                className={`p-2 rounded-lg border min-h-[40px] min-w-[40px] flex items-center justify-center ${
+                  isPrivacyBlur
+                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-500'
+                    : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                }`}
+                title="Toggle Privacy Blur"
+              >
+                {isPrivacyBlur ? <EyeOff className="w-4 h-4 text-amber-500" /> : <Eye className="w-4 h-4" />}
+              </button>
+            )}
+
             {/* Quick Add Item on Mobile */}
             <button
               onClick={onOpenAddItemModal}
@@ -240,6 +301,19 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* secondary Navigation List */}
             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-2 space-y-1 border border-slate-200/60 dark:border-slate-800">
+              {requireScreenLock && onLockScreen && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onLockScreen();
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
+                >
+                  <Lock className="w-4 h-4 text-emerald-500" />
+                  <span>Lock Screen Now</span>
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
@@ -269,4 +343,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-

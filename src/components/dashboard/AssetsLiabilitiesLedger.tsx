@@ -24,12 +24,14 @@ import {
   Eye,
   EyeOff,
   CheckSquare,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles
 } from 'lucide-react';
 import { FinancialItem, CurrencyCode, AssetCategory, LiabilityCategory, InsuranceCategory, ItemType } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getMostRecentItems } from '../../utils/itemHelpers';
+import { suggestCategoryFromAccountName } from '../../utils/aiCategorySuggester';
 
 interface AssetsLiabilitiesLedgerProps {
   items: FinancialItem[];
@@ -250,6 +252,11 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   }, [items]);
 
   const [isEditCustomCategory, setIsEditCustomCategory] = useState<boolean>(false);
+
+  const inlineCategorySuggestion = useMemo(() => {
+    if (!editingId || !editName || editName.trim().length < 2) return null;
+    return suggestCategoryFromAccountName(editName);
+  }, [editingId, editName]);
 
   const startEdit = (item: FinancialItem) => {
     setEditingId(item.id);
@@ -1374,6 +1381,21 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                               onChange={(e) => setEditCategory(e.target.value)}
                               className="px-2 py-1 bg-slate-800 border border-emerald-500/50 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 animate-fade-in"
                             />
+                          )}
+                          {inlineCategorySuggestion && (editCategory !== inlineCategorySuggestion.suggestedCategory || editType !== inlineCategorySuggestion.suggestedType) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsEditCustomCategory(false);
+                                setEditCategory(inlineCategorySuggestion.suggestedCategory);
+                                setEditType(inlineCategorySuggestion.suggestedType);
+                              }}
+                              className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 flex items-center gap-1 text-left w-fit cursor-pointer transition-colors"
+                              title={`Keyword match: "${inlineCategorySuggestion.matchedKeyword}"`}
+                            >
+                              <Sparkles className="w-2.5 h-2.5 text-indigo-400 shrink-0" />
+                              <span>Suggest: <strong className="text-white">{inlineCategorySuggestion.suggestedCategory}</strong></span>
+                            </button>
                           )}
                         </div>
                       ) : (

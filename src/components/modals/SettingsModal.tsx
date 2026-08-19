@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, Save, AlertCircle, Download, Printer, Sliders, FileSpreadsheet, Bot, Cpu } from 'lucide-react';
+import { X, Key, Save, AlertCircle, Download, Printer, Sliders, FileSpreadsheet, Bot, Cpu, Lock, Shield } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -7,6 +7,8 @@ interface SettingsModalProps {
   onExportCSV?: (startDate?: string, endDate?: string) => void;
   onPrint?: (startDate?: string, endDate?: string) => void;
   onPreviewReport?: () => void;
+  onUpdatePrivacySettings?: (settings: { requireScreenLock: boolean; defaultPrivacyBlur: boolean }) => void;
+  onLockScreenNow?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -15,6 +17,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportCSV,
   onPrint,
   onPreviewReport,
+  onUpdatePrivacySettings,
+  onLockScreenNow,
 }) => {
   const [provider, setProvider] = useState<'gemini' | 'openai' | 'deepseek' | 'groq' | 'ollama' | 'custom'>('gemini');
   const [apiKey, setApiKey] = useState('');
@@ -24,20 +28,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // Privacy & Security Settings State
+  const [requireScreenLock, setRequireScreenLock] = useState<boolean>(false);
+  const [defaultPrivacyBlur, setDefaultPrivacyBlur] = useState<boolean>(false);
+
   useEffect(() => {
     if (isOpen) {
       const storedProvider = (localStorage.getItem('aiProvider') as any) || 'gemini';
       const storedKey = localStorage.getItem('aiApiKey') || localStorage.getItem('geminiApiKey') || '';
       const storedUrl = localStorage.getItem('aiBaseUrl') || '';
       const storedModel = localStorage.getItem('aiModel') || '';
+      const storedScreenLock = localStorage.getItem('requireScreenLock') === 'true';
+      const storedPrivacyBlur = localStorage.getItem('defaultPrivacyBlur') === 'true';
 
       setProvider(storedProvider);
       setApiKey(storedKey);
       setBaseUrl(storedUrl);
       setModel(storedModel);
+      setRequireScreenLock(storedScreenLock);
+      setDefaultPrivacyBlur(storedPrivacyBlur);
       setSaved(false);
     }
   }, [isOpen]);
+
+  const handleToggleScreenLock = (checked: boolean) => {
+    setRequireScreenLock(checked);
+    localStorage.setItem('requireScreenLock', String(checked));
+    onUpdatePrivacySettings?.({
+      requireScreenLock: checked,
+      defaultPrivacyBlur,
+    });
+  };
+
+  const handleToggleDefaultPrivacyBlur = (checked: boolean) => {
+    setDefaultPrivacyBlur(checked);
+    localStorage.setItem('defaultPrivacyBlur', String(checked));
+    onUpdatePrivacySettings?.({
+      requireScreenLock,
+      defaultPrivacyBlur: checked,
+    });
+  };
 
   const handleSave = () => {
     localStorage.setItem('aiProvider', provider);
@@ -45,10 +75,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     localStorage.setItem('geminiApiKey', apiKey.trim()); // Backwards compatibility
     localStorage.setItem('aiBaseUrl', baseUrl.trim());
     localStorage.setItem('aiModel', model.trim());
+    localStorage.setItem('requireScreenLock', String(requireScreenLock));
+    localStorage.setItem('defaultPrivacyBlur', String(defaultPrivacyBlur));
+
+    onUpdatePrivacySettings?.({
+      requireScreenLock,
+      defaultPrivacyBlur,
+    });
+
     setSaved(true);
     setTimeout(() => {
       onClose();
-    }, 1000);
+    }, 800);
   };
 
   if (!isOpen) return null;
@@ -73,8 +111,90 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto">
           
+          {/* Privacy & Security Settings */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <Shield className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+              Privacy & Security Settings
+            </h4>
+
+            {/* Screen Lock Toggle */}
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl transition-colors">
+              <div className="pr-4">
+                <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Require Screen Lock</span>
+                  {requireScreenLock && (
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
+                      Enabled
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Require re-authentication after 5 minutes of inactivity
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={requireScreenLock}
+                  onChange={(e) => handleToggleScreenLock(e.target.checked)}
+                  className="sr-only peer"
+                  aria-label="Require Screen Lock"
+                />
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+
+            {/* Lock Screen Now Quick Action */}
+            {requireScreenLock && onLockScreenNow && (
+              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between animate-fade-in">
+                <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5" />
+                  Lock your session immediately
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onLockScreenNow();
+                  }}
+                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded-lg shadow-sm transition-colors cursor-pointer"
+                >
+                  Lock Screen Now
+                </button>
+              </div>
+            )}
+
+            {/* Default Privacy Blur Mode Toggle */}
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl transition-colors">
+              <div className="pr-4">
+                <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Default to Privacy Blur</span>
+                  {defaultPrivacyBlur && (
+                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded">
+                      Enabled
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Automatically hide financial details when the app starts
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={defaultPrivacyBlur}
+                  onChange={(e) => handleToggleDefaultPrivacyBlur(e.target.checked)}
+                  className="sr-only peer"
+                  aria-label="Default to Privacy Blur"
+                />
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+          </div>
+
           {/* Quick Actions / Export & Print Section */}
-          <div className="space-y-3">
+          <div className="border-t border-slate-200 dark:border-slate-800/80 pt-5 space-y-3">
             <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <Download className="w-4 h-4 text-teal-500 dark:text-teal-400" />
               Download & Export Options
@@ -154,6 +274,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
+          {/* AI Model & Provider Configuration */}
           <div className="border-t border-slate-200 dark:border-slate-800/80 pt-5 space-y-4">
             <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
               <Bot className="w-4 h-4 text-purple-500 dark:text-purple-400" />
@@ -283,37 +404,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Privacy & Security Settings */}
-          <div className="border-t border-slate-200 dark:border-slate-800/80 pt-5 space-y-4">
-            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400" />
-              Privacy & Security Settings
-            </h4>
-
-            {/* Screen Lock Toggle */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">Require Screen Lock</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Require re-authentication after 5 minutes of inactivity</div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-              </label>
-            </div>
-
-            {/* Default Privacy Blur Mode Toggle */}
-            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">Default to Privacy Blur</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Automatically hide financial details when the app starts</div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-              </label>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
@@ -342,4 +432,3 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     </div>
   );
 };
-
