@@ -16,7 +16,10 @@ import {
   ReportPreviewModal,
 } from './components';
 import { auth, subscribeUserPortfolios, saveUserPortfolioToFirestore, deleteUserPortfolioFromFirestore, syncAllPortfoliosToFirestore } from './lib/firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { useInactivityTimeout } from './hooks/useInactivityTimeout';
+import { isVaultEnabled, getSecureItem, setSecureItem, setupVault } from './lib/secureStorage';
+import { VaultLockScreen } from './components/VaultLockScreen';
 
 const isExamplePortfolio = (p: PortfolioData): boolean => {
   if (!p) return true;
@@ -46,11 +49,27 @@ export default function App() {
   };
 
   // Load initial portfolios from localStorage or default empty portfolio
+  const [vaultPin, setVaultPin] = useState<string | null>(null);
+  const [isVaultLocked, setIsVaultLocked] = useState<boolean>(isVaultEnabled());
+  const [isVaultSetupMode, setIsVaultSetupMode] = useState<boolean>(false);
+
+  useInactivityTimeout(
+    15 * 60 * 1000,
+    () => {
+      if (currentUser) signOut(auth);
+      if (isVaultEnabled()) {
+        setVaultPin(null);
+        setIsVaultLocked(true);
+      }
+    },
+    !isVaultLocked
+  );
+
   const [portfolios, setPortfolios] = useState<PortfolioData[]>(() => {
+    if (isVaultEnabled()) return []; // Wait for unlock
     try {
-      const saved = localStorage.getItem('networth_pulse_portfolios');
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const parsed = getSecureItem('networth_pulse_portfolios', null);
+      if (parsed) {
         if (Array.isArray(parsed) && parsed.length > 0) {
           const filtered = parsed.filter((p) => !isExamplePortfolio(p));
           if (filtered.length > 0) {
@@ -68,6 +87,12 @@ export default function App() {
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string>(() => {
     return portfolios[0]?.id || 'main-portfolio';
   });
+
+  useEffect(() => {
+    if (portfolios.length > 0 && !portfolios.find(p => p.id === selectedPortfolioId)) {
+      setSelectedPortfolioId(portfolios[0].id);
+    }
+  }, [portfolios]);
 
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
 
@@ -143,11 +168,12 @@ export default function App() {
     };
   }, []);
 
-  // Sync to localStorage and Firestore whenever portfolios change
+  // Sync to secureStorage and Firestore whenever portfolios change
   useEffect(() => {
+    if (isVaultLocked && portfolios.length === 0) return; // Don't wipe
     const cleanPortfolios = portfolios.filter((p) => !isExamplePortfolio(p));
     try {
-      localStorage.setItem('networth_pulse_portfolios', JSON.stringify(cleanPortfolios));
+      setSecureItem('networth_pulse_portfolios', cleanPortfolios, vaultPin);
     } catch (e) {
       console.error('Failed saving portfolios to localStorage', e);
     }
@@ -593,8 +619,32 @@ export default function App() {
     }, 150);
   };
 
+  const handleUnlock = (pin: string) => {
+    setVaultPin(pin);
+    setIsVaultLocked(false);
+    setIsVaultSetupMode(false);
+    
+    // Load local portfolios now
+    try {
+      const parsed = getSecureItem('networth_pulse_portfolios', pin);
+      if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+        const filtered = parsed.filter((p: any) => !isExamplePortfolio(p)).map(sanitizePortfolio);
+        if (filtered.length > 0) setPortfolios(filtered);
+      } else {
+        const cleanSamples = SAMPLE_PORTFOLIOS.filter((p) => !isExamplePortfolio(p)).map(sanitizePortfolio);
+        setPortfolios(cleanSamples.length > 0 ? cleanSamples : [DEFAULT_PORTFOLIO]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950 transition-colors">
+      {(isVaultLocked || isVaultSetupMode) && (
+        <VaultLockScreen isSetup={isVaultSetupMode} onUnlock={handleUnlock} />
+      )}
+      <div className={`transition-all duration-500 ${(isVaultLocked || isVaultSetupMode) ? 'blur-md opacity-40 pointer-events-none' : ''}`}>
       
       {/* Top Header */}
       <Header
@@ -607,6 +657,8 @@ export default function App() {
         onOpenImportModal={() => setIsImportModalOpen(true)}
         onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onLockVault={() => { if(isVaultEnabled()) { setVaultPin(null); setIsVaultLocked(true); } else { setIsVaultSetupMode(true); } }}
+        isVaultEnabled={isVaultEnabled()}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         currency={currency}
         onChangeCurrency={(c) => setCurrency(c)}
@@ -755,6 +807,7 @@ export default function App() {
         isSyncing={isSyncing}
       />
 
+      </div>
     </div>
   );
 }
