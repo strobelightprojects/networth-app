@@ -236,7 +236,7 @@ const parseSpreadsheetSchema = z.object({
     try {
       const parsedBody = parseSpreadsheetSchema.safeParse(req.body);
       if (!parsedBody.success) {
-        return res.status(400).json({ error: 'Invalid input data', details: parsedBody.error.errors });
+        return res.status(400).json({ error: 'Invalid input data', details: parsedBody.error.issues });
       }
 
       const { rawText, headers, sampleRows, apiKey: userApiKey, provider: reqProvider, baseUrl: reqBaseUrl, model: reqModel } = parsedBody.data;
@@ -422,7 +422,7 @@ const suggestCategoriesSchema = z.object({
     try {
       const parsedBody = suggestCategoriesSchema.safeParse(req.body);
       if (!parsedBody.success) {
-        return res.status(400).json({ error: 'Invalid input data', details: parsedBody.error.errors });
+        return res.status(400).json({ error: 'Invalid input data', details: parsedBody.error.issues });
       }
 
       const { items, apiKey: userApiKey, provider: reqProvider, baseUrl: reqBaseUrl, model: reqModel } = parsedBody.data;

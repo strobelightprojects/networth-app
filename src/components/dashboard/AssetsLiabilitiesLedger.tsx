@@ -25,7 +25,8 @@ import {
   EyeOff,
   CheckSquare,
   AlertTriangle,
-  Sparkles
+  Sparkles,
+  Activity
 } from 'lucide-react';
 import { FinancialItem, CurrencyCode, AssetCategory, LiabilityCategory, InsuranceCategory, ItemType } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -87,6 +88,22 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showNetWorthBreakdown, setShowNetWorthBreakdown] = useState<boolean>(false);
   const [breakdownView, setBreakdownView] = useState<'accounts' | 'categories'>('accounts');
+  const [showDataHealth, setShowDataHealth] = useState<boolean>(false);
+
+  const getItemHealthWarning = (item: FinancialItem) => {
+    if (item.value === 0) return { type: 'error', message: 'Value is 0' };
+    if (!item.category || item.category === 'Uncategorized') return { type: 'warning', message: 'Missing Category' };
+    if (item.lastUpdated) {
+      const updated = new Date(item.lastUpdated);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - updated.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      if (diffDays > 30) return { type: 'warning', message: `Stale (${diffDays}d)` };
+    } else {
+      return { type: 'warning', message: 'Missing Date' };
+    }
+    return null;
+  };
 
   // All active account entries (most recent per account name/type)
   const allActiveItems = useMemo(() => getMostRecentItems(items, true), [items]);
@@ -462,6 +479,19 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
             ))}
           </select>
 
+          {/* Data Health Toggle Button */}
+          <button
+            onClick={() => setShowDataHealth(!showDataHealth)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+              showDataHealth 
+                ? 'bg-amber-500/10 border-amber-500/50 text-amber-600 dark:text-amber-400' 
+                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+            title="Highlight missing categories, stale dates, or zero values"
+          >
+            <Activity className="w-4 h-4" />
+            <span className="hidden sm:inline">Data Health</span>
+          </button>
           {/* Breakdown Toggle Button */}
           <button
             onClick={() => setShowNetWorthBreakdown(!showNetWorthBreakdown)}
@@ -1201,15 +1231,13 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
             ) : (
               processedItems.map((item) => {
                 const isEditing = editingId === item.id;
-                const isSelected = selectedIds.has(item.id);
-
-                return (
+                const isSelected = selectedIds.has(item.id); const healthWarning = showDataHealth ? getItemHealthWarning(item) : null; return (
                   <tr 
                     id={`ledger-row-${item.id}`} 
                     key={item.id} 
                     className={`hover:bg-slate-900/50 transition-colors group ${
                       isSelected ? 'bg-emerald-500/10 dark:bg-emerald-950/20' : ''
-                    }`}
+                    } ${healthWarning ? (healthWarning.type === 'error' ? 'bg-rose-500/5 dark:bg-rose-900/10' : 'bg-amber-500/5 dark:bg-amber-900/10') : ''}`}
                   >
                     {/* Checkbox */}
                     <td className="py-3 px-3 text-center print:hidden">
@@ -1244,6 +1272,16 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
                               <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 inline-flex items-center gap-0.5">
                                 <Globe className="w-2.5 h-2.5" />
                                 {item.currency} {getCurrencySymbol(item.currency)}
+                              </span>
+                            )}
+                            {healthWarning && !isEditing && (
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold border inline-flex items-center gap-1 ${
+                                healthWarning.type === 'error' 
+                                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
+                                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              }`}>
+                                <Activity className="w-2.5 h-2.5" />
+                                {healthWarning.message}
                               </span>
                             )}
                           </div>

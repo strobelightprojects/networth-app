@@ -61,6 +61,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
   // Data Preview State
   const [previewData, setPreviewData] = useState<PreviewState | null>(null);
+  const [previewTab, setPreviewTab] = useState<'mapped' | 'raw'>('mapped');
   const [isCategorizingWithGemini, setIsCategorizingWithGemini] = useState<boolean>(false);
   const [aiCategorizedSuccessMsg, setAiCategorizedSuccessMsg] = useState<string | null>(null);
   const [aiItemReasons, setAiItemReasons] = useState<Record<string, { confidence: string; reasoning?: string }>>({});
@@ -75,6 +76,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       setImportDate(new Date().toISOString().split('T')[0]);
       setImportMode('replace');
       setPreviewData(null);
+      setPreviewTab('mapped');
       setIsCategorizingWithGemini(false);
       setAiCategorizedSuccessMsg(null);
       setAiItemReasons({});
@@ -511,10 +513,27 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               )}
 
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                  <Table className="w-3.5 h-3.5 text-emerald-400" />
-                  Parsed Financial Accounts ({previewData.items.length})
-                </span>
+                {previewData.parsedSheet ? (
+                  <div className="flex bg-slate-900 p-1 rounded-xl w-fit border border-slate-800">
+                    <button
+                      onClick={() => setPreviewTab('mapped')}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${previewTab === 'mapped' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      Mapped Accounts ({previewData.items.length})
+                    </button>
+                    <button
+                      onClick={() => setPreviewTab('raw')}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${previewTab === 'raw' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                      Raw File Data ({previewData.parsedSheet.rows.length})
+                    </button>
+                  </div>
+                ) : (
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <Table className="w-3.5 h-3.5 text-emerald-400" />
+                    Parsed Financial Accounts ({previewData.items.length})
+                  </span>
+                )}
                 
                 <div className="flex items-center gap-2">
                   <button
@@ -548,58 +567,88 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-slate-800 max-h-56 bg-slate-950">
-                <table className="w-full text-left text-[11px]">
-                  <thead>
-                    <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold">
-                      <th className="p-2.5">Account Name</th>
-                      <th className="p-2.5">Category</th>
-                      <th className="p-2.5">Date</th>
-                      <th className="p-2.5">Type</th>
-                      <th className="p-2.5 text-right">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {previewData.items.map((item, idx) => {
-                      const aiMeta = aiItemReasons[item.id];
-                      return (
-                        <tr key={idx} className="hover:bg-slate-900/50">
-                          <td className="p-2.5 text-slate-200 font-medium">{item.name}</td>
-                          <td className="p-2.5 text-slate-300">
-                            <div className="flex items-center gap-1.5">
-                              <span>{item.category}</span>
-                              {aiMeta && (
-                                <span
-                                  title={aiMeta.reasoning || 'Categorized using Gemini AI'}
-                                  className="px-1.5 py-0.5 bg-purple-500/20 text-purple-300 text-[9px] font-bold rounded-md border border-purple-500/30 flex items-center gap-0.5 cursor-help"
-                                >
-                                  <Sparkles className="w-2.5 h-2.5 text-purple-300" />
-                                  AI
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-2.5 text-slate-400 font-mono text-[10px]">{item.lastUpdated || '-'}</td>
-                          <td className="p-2.5">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                              item.type === 'asset'
-                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                : item.type === 'liability'
-                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                            }`}>
-                              {item.type}
-                            </span>
-                          </td>
-                          <td className="p-2.5 text-right font-extrabold text-white">
-                            {formatCurrency(item.value, 'USD')}
-                          </td>
+              {previewTab === 'mapped' ? (
+                <div className="overflow-x-auto rounded-xl border border-slate-800 max-h-56 bg-slate-950">
+                  <table className="w-full text-left text-[11px]">
+                    <thead>
+                      <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold">
+                        <th className="p-2.5">Account Name</th>
+                        <th className="p-2.5">Category</th>
+                        <th className="p-2.5">Date</th>
+                        <th className="p-2.5">Type</th>
+                        <th className="p-2.5 text-right">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {previewData.items.map((item, idx) => {
+                        const aiMeta = aiItemReasons[item.id];
+                        return (
+                          <tr key={idx} className="hover:bg-slate-900/50">
+                            <td className="p-2.5 text-slate-200 font-medium">{item.name}</td>
+                            <td className="p-2.5 text-slate-300">
+                              <div className="flex items-center gap-1.5">
+                                <span>{item.category}</span>
+                                {aiMeta && (
+                                  <span
+                                    title={aiMeta.reasoning || 'Categorized using Gemini AI'}
+                                    className="px-1.5 py-0.5 bg-purple-500/20 text-purple-300 text-[9px] font-bold rounded-md border border-purple-500/30 flex items-center gap-0.5 cursor-help"
+                                  >
+                                    <Sparkles className="w-2.5 h-2.5 text-purple-300" />
+                                    AI
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-2.5 text-slate-400 font-mono text-[10px]">{item.lastUpdated || '-'}</td>
+                            <td className="p-2.5">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                item.type === 'asset'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                  : item.type === 'liability'
+                                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                              }`}>
+                                {item.type}
+                              </span>
+                            </td>
+                            <td className="p-2.5 text-right font-extrabold text-white">
+                              {formatCurrency(item.value, 'USD')}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-slate-800 max-h-56 bg-slate-950">
+                  <table className="w-full text-left text-[11px]">
+                    <thead>
+                      <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold whitespace-nowrap">
+                        {previewData.parsedSheet?.headers.map((h, i) => (
+                          <th key={i} className="p-2.5">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {previewData.parsedSheet?.rows.slice(0, 50).map((row, idx) => (
+                        <tr key={idx} className="hover:bg-slate-900/50 whitespace-nowrap">
+                          {previewData.parsedSheet?.headers.map((h, i) => (
+                            <td key={i} className="p-2.5 text-slate-300">
+                              {String(row[h] ?? '')}
+                            </td>
+                          ))}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                      ))}
+                    </tbody>
+                  </table>
+                  {previewData.parsedSheet && previewData.parsedSheet.rows.length > 50 && (
+                    <div className="p-2 text-center text-[10px] text-slate-500 bg-slate-900 border-t border-slate-800">
+                      Showing first 50 rows of {previewData.parsedSheet.rows.length} total rows.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer Action Buttons */}
