@@ -38,8 +38,7 @@ jobs:
       - name: Build project
         env:
           NODE_ENV: production
-          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
-        run: npm run build
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
