@@ -113,4 +113,54 @@ describe('App', () => {
       expect(screen.queryByText('Item To Delete')).toBeNull();
     });
   });
+
+  it('can open manage files', async () => {
+    render(<App />);
+    const switchBtn = screen.getByTitle('Manage & Remove Portfolio Files');
+    fireEvent.click(switchBtn);
+    expect(screen.getByText('Manage Portfolio Files')).toBeDefined();
+  });
+
+  it('can open auth modal', async () => {
+    render(<App />);
+    const authBtn = screen.getByTitle('Account & Cloud Storage');
+    fireEvent.click(authBtn);
+    expect(screen.getByText('User Account & Security')).toBeDefined();
+  });
+
+  it('can open the generate report modal', async () => {
+    render(<App />);
+    
+    // Open settings modal first
+    const settingsBtn = screen.getByTitle('App Settings');
+    fireEvent.click(settingsBtn);
+
+    // Open the report modal
+    const generateReportBtns = screen.getAllByText('Net Worth Report');
+    fireEvent.click(generateReportBtns[0]);
+    
+    expect(screen.getAllByText('Net Worth & Personal Financial Audit Report').length).toBeGreaterThan(0);
+  });
+
+  it('can click manage files from header select area', async () => {
+    render(<App />);
+    
+    const manageBtn = screen.getByTitle('Manage & Remove Portfolio Files');
+    if (manageBtn) {
+      fireEvent.click(manageBtn);
+      expect(screen.getByText('Manage Portfolio Files')).toBeDefined();
+    }
+  });
+
+  it('can delete current portfolio', async () => {
+    render(<App />);
+    
+    const delBtn = screen.getByTitle(/Remove file/i);
+    fireEvent.click(delBtn);
+    
+    // Default portfolio deleted, should fallback to empty default
+    await waitFor(() => {
+      expect(screen.getByText('Net Worth Tracker')).toBeDefined();
+    });
+  });
 });

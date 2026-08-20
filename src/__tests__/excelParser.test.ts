@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import { extractDateFromFilename, suggestColumnMapping, convertRowsToItems, parseCSVText, parseDateString, detectGlobalDateFromSheet, inferCategory } from '../utils/excelParser';
 import { ColumnMapping } from '../types';
+
+vi.mock('../utils/aiCategorySuggester', () => ({
+  suggestCategoryFromAccountName: vi.fn(() => null)
+}));
 
 describe('excelParser', () => {
   describe('inferCategory', () => {
@@ -44,9 +48,19 @@ describe('excelParser', () => {
       expect(parseDateString('05/15/2024')).toBe('2024-05-15');
       expect(parseDateString('12/01/2023')).toBe('2023-12-01');
     });
+    
+    it('parses DD/MM/YYYY', () => {
+      expect(parseDateString('15/05/2024')).toBe('2024-05-15');
+      expect(parseDateString('31-12-2023')).toBe('2023-12-31');
+    });
 
     it('parses YYYY-MM', () => {
       expect(parseDateString('2024-06')).toBe('2024-06-01');
+    });
+    
+    it('parses Excel numeric dates', () => {
+      // 45428 = May 16 2024
+      expect(parseDateString(45428)).toBe('2024-05-16');
     });
 
     it('parses text dates like January 15, 2024', () => {
@@ -109,6 +123,15 @@ describe('excelParser', () => {
     it('extracts Month Year dates', () => {
       expect(extractDateFromFilename('NetWorth_January_2024.xlsx', '')).toBe('2024-01');
       expect(extractDateFromFilename('March_2023_Finances.csv', '')).toBe('2023-03');
+    });
+
+    it('extracts Year Month dates', () => {
+      expect(extractDateFromFilename('NetWorth_2024_January.xlsx', '')).toBe('2024-01');
+      expect(extractDateFromFilename('2023_March_Finances.csv', '')).toBe('2023-03');
+    });
+
+    it('extracts Year-only dates', () => {
+      expect(extractDateFromFilename('NetWorth_2024.xlsx', '')).toBe('2024-01');
     });
 
     it('returns falsy if no date in filename', () => {

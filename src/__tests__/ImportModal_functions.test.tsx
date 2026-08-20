@@ -34,7 +34,9 @@ describe('ImportModal function coverage', () => {
       headers: ['Name', 'Value'],
       rows: [{ Name: 'Test', Value: '100' }],
       fileName: 'PastedData.csv',
-      suggestedMapping: { nameCol: 'Name', valueCol: 'Value' }
+      suggestedMapping: { nameCol: 'Name', valueCol: 'Value' },
+      sheetNames: ['CSV Data'],
+      activeSheetName: 'CSV Data'
     };
     vi.mocked(excelParser.parseCSVText).mockReturnValue(mockParsed);
     vi.mocked(excelParser.convertRowsToItems).mockReturnValue([
@@ -67,7 +69,7 @@ describe('ImportModal function coverage', () => {
 
     // Mock Gemini Response
     vi.mocked(geminiService.suggestCategoriesWithGemini).mockResolvedValue([
-      { index: 0, suggestedCategory: 'Cash', suggestedType: 'asset', confidence: 'high', reasoning: 'Because' }
+      { index: 0, name: 'Test', suggestedCategory: 'Cash', suggestedType: 'asset', confidence: 'high', reasoning: 'Because' }
     ]);
 
     // Find and click the Auto-Categorize with Gemini AI button

@@ -1,0 +1,55 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/app/applet[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 4305[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and filters items by text search [33m 520[2mms[22m[39m
+     [33m[2m✓[22m[39m allows switching between tabs (All, Assets, Liabilities) [33m 403[2mms[22m[39m
+     [33m[2m✓[22m[39m allows toggling item exclusion and breakdown view [33m 801[2mms[22m[39m
+     [33m[2m✓[22m[39m allows sorting columns [33m 404[2mms[22m[39m
+     [33m[2m✓[22m[39m supports inline editing of all fields and cancelling [33m 318[2mms[22m[39m
+     [33m[2m✓[22m[39m supports item selection and bulk delete operations [33m 1295[2mms[22m[39m
+ [32m✓[39m src/__tests__/App.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 2503[2mms[22m[39m
+     [33m[2m✓[22m[39m renders without crashing and can interact with modals [33m 913[2mms[22m[39m
+     [33m[2m✓[22m[39m can add a new item and update state [33m 593[2mms[22m[39m
+     [33m[2m✓[22m[39m can delete an item [33m 702[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_e2e_portfolio_flow.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1907[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests opening Manage Portfolios and creating a new portfolio file [33m 1315[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests opening Add Item modal and entering item details [33m 351[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1882[2mms[22m[39m
+     [33m[2m✓[22m[39m renders AddItemModal correctly and handles asset account creation [33m 372[2mms[22m[39m
+     [33m[2m✓[22m[39m supports creating custom categories [33m 488[2mms[22m[39m
+     [33m[2m✓[22m[39m supports foreign currency selection and exclusion toggling [33m 313[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal_validation.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1025[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal when open and allows switching between Asset, Liability, and Insurance [33m 798[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 1082[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 955[2mms[22m[39m
+     [33m[2m✓[22m[39m allows creating a new portfolio file [33m 507[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_modals_lifecycle.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1086[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests AuthModal login/signup toggle and submit flow [33m 619[2mms[22m[39m
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger_features.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 930[2mms[22m[39m
+     [33m[2m✓[22m[39m renders all accounts across assets, liabilities, and insurance [33m 342[2mms[22m[39m
+ [32m✓[39m src/__tests__/ReportPreviewModal.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 952[2mms[22m[39m
+     [33m[2m✓[22m[39m calls onPrint and onClose when Print Report is clicked [33m 437[2mms[22m[39m
+ [32m✓[39m src/__tests__/AuthModal.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 832[2mms[22m[39m
+     [33m[2m✓[22m[39m handles sign in with email correctly [33m 500[2mms[22m[39m
+ [32m✓[39m src/__tests__/AllocationChart.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 832[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and allows view mode switching [33m 704[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal_interactions.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 933[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal with API key configurations and export options [33m 564[2mms[22m[39m
+     [33m[2m✓[22m[39m saves provider and API key to localStorage [33m 305[2mms[22m[39m
+ [32m✓[39m src/__tests__/Header.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 765[2mms[22m[39m
+     [33m[2m✓[22m[39m triggers action buttons when clicked [33m 390[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 767[2mms[22m[39m
+     [33m[2m✓[22m[39m allows selecting AI Provider and saving configuration to localStorage [33m 421[2mms[22m[39m
+ [32m✓[39m src/__tests__/AuthModal_functions.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 580[2mms[22m[39m
+ [32m✓[39m src/__tests__/ColumnMapperModal.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 354[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal_interactions.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 515[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal_functions.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 392[2mms[22m[39m
+     [33m[2m✓[22m[39m handles suggestCategoriesWithGemini [33m 384[2mms[22m[39m
+ [32m✓[39m src/__tests__/KPICards.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 257[2mms[22m[39m
+ [32m✓[39m src/__tests__/NetWorthChart.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 238[2mms[22m[39m
+ [32m✓[39m src/__tests__/currency.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+ [32m✓[39m src/__tests__/formatters_extended.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 79[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_financial_engine.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 74[2mms[22m[39m
+ [32m✓[39m src/__tests__/geminiCategoryService.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 37[2mms[22m[39m

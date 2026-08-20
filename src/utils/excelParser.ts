@@ -512,11 +512,11 @@ export function inferCategory(name: string, catStr: string, type: ItemType): Ass
   const combined = (name + ' ' + catStr).toLowerCase();
 
   if (type === 'insurance') {
+    if (combined.includes('health') || combined.includes('long-term care')) return 'Health & Long-Term Care';
     if (combined.includes('term')) return 'Term Life Insurance';
     if (combined.includes('whole')) return 'Whole Life Insurance';
     if (combined.includes('universal')) return 'Universal Life Insurance';
     if (combined.includes('disability')) return 'Disability Insurance';
-    if (combined.includes('health') || combined.includes('long-term care')) return 'Health & Long-Term Care';
     return 'Term Life Insurance';
   } else if (type === 'liability') {
     if (combined.includes('mortgage') || combined.includes('home loan')) return 'Mortgage';

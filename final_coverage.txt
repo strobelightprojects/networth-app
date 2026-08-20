@@ -1,0 +1,104 @@
+
+> networth-tracker@0.0.0 test:coverage
+> vitest run --coverage
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/app/applet[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 3069[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and filters items by text search [33m 409[2mms[22m[39m
+     [33m[2m✓[22m[39m allows toggling item exclusion and breakdown view [33m 445[2mms[22m[39m
+     [33m[2m✓[22m[39m allows sorting columns [33m 335[2mms[22m[39m
+     [33m[2m✓[22m[39m supports inline editing of all fields and cancelling [32m 300[2mms[22m[39m
+     [33m[2m✓[22m[39m supports item selection and bulk delete operations [33m 973[2mms[22m[39m
+ [32m✓[39m src/__tests__/App.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 2948[2mms[22m[39m
+     [33m[2m✓[22m[39m renders without crashing and can interact with modals [33m 694[2mms[22m[39m
+     [33m[2m✓[22m[39m can add a new item and update state [33m 424[2mms[22m[39m
+     [33m[2m✓[22m[39m can delete an item [33m 536[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_e2e_portfolio_flow.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 1290[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests opening Manage Portfolios and creating a new portfolio file [33m 911[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1322[2mms[22m[39m
+     [33m[2m✓[22m[39m supports creating custom categories [33m 344[2mms[22m[39m
+ [32m✓[39m src/__tests__/AddItemModal_validation.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 761[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal when open and allows switching between Asset, Liability, and Insurance [33m 581[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 719[2mms[22m[39m
+     [33m[2m✓[22m[39m allows creating a new portfolio file [33m 370[2mms[22m[39m
+ [32m✓[39m src/__tests__/AuthModal.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 948[2mms[22m[39m
+     [33m[2m✓[22m[39m handles sign in with email correctly [33m 463[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 792[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_modals_lifecycle.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 714[2mms[22m[39m
+     [33m[2m✓[22m[39m smoke tests AuthModal login/signup toggle and submit flow [33m 436[2mms[22m[39m
+ [32m✓[39m src/__tests__/ReportPreviewModal.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 640[2mms[22m[39m
+ [32m✓[39m src/__tests__/AllocationChart.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 600[2mms[22m[39m
+     [33m[2m✓[22m[39m renders correctly and allows view mode switching [33m 518[2mms[22m[39m
+ [32m✓[39m src/__tests__/AssetsLiabilitiesLedger_features.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 639[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 551[2mms[22m[39m
+ [32m✓[39m src/__tests__/Header.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 512[2mms[22m[39m
+ [32m✓[39m src/__tests__/SettingsModal_interactions.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 645[2mms[22m[39m
+     [33m[2m✓[22m[39m renders modal with API key configurations and export options [33m 396[2mms[22m[39m
+ [32m✓[39m src/__tests__/AuthModal_functions.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 385[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageFilesModal_interactions.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 315[2mms[22m[39m
+ [32m✓[39m src/__tests__/ColumnMapperModal.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 302[2mms[22m[39m
+ [32m✓[39m src/__tests__/ImportModal_functions.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 250[2mms[22m[39m
+ [32m✓[39m src/__tests__/KPICards.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[32m 202[2mms[22m[39m
+ [32m✓[39m src/__tests__/NetWorthChart.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[32m 139[2mms[22m[39m
+ [32m✓[39m src/__tests__/currency.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m src/__tests__/formatters_extended.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m src/__tests__/smoke_financial_engine.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/__tests__/formatters.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m src/__tests__/geminiCategoryService.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/__tests__/excelParser.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/__tests__/itemHelpers_extended.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32m✓[39m src/__tests__/aiCategorySuggester.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/__tests__/itemHelpers.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32m✓[39m src/__tests__/excelParser_multisection.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32m✓[39m src/__tests__/firebase.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/__tests__/samplePortfolios.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m33 passed[39m[22m[90m (33)[39m
+[2m      Tests [22m [1m[32m213 passed[39m[22m[90m (213)[39m
+[2m   Start at [22m 16:08:13
+[2m   Duration [22m 100.77s[2m (transform 1.37s, setup 9.06s, import 11.74s, tests 18.05s, environment 47.37s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   75.47 |    71.42 |   71.21 |    76.9 |                   
+ applet            |       0 |        0 |       0 |       0 |                   
+  ...t-config.json |       0 |        0 |       0 |       0 |                   
+ applet/src        |   32.45 |    23.33 |   33.63 |   35.95 |                   
+  App.tsx          |   32.45 |    23.33 |   33.63 |   35.95 | ...26-731,744-752 
+ ...src/components |     100 |      100 |     100 |     100 |                   
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ponents/charts |   82.82 |       70 |      80 |   82.51 |                   
+  ...tionChart.tsx |   86.84 |    76.27 |   86.11 |   85.48 | ...17,138,192-204 
+  ...orthChart.tsx |   78.82 |    62.74 |   68.42 |   79.74 | ...30,156,220-301 
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ents/dashboard |   74.52 |    70.85 |   73.41 |   72.69 |                   
+  ...iesLedger.tsx |   71.16 |       70 |   70.42 |   68.84 | ...1420,1471,1611 
+  Header.tsx       |     100 |    81.25 |     100 |     100 | 131,201-206       
+  KPICards.tsx     |     100 |    78.57 |     100 |     100 | 41,63-67          
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ ...ponents/modals |   85.41 |    74.14 |   84.31 |   86.93 |                   
+  AddItemModal.tsx |   79.64 |    77.21 |    87.5 |    80.9 | ...04-206,309-311 
+  AuthModal.tsx    |   80.55 |    61.53 |   76.92 |   83.82 | ...23,182-185,295 
+  ...pperModal.tsx |   82.35 |    83.58 |   78.57 |   82.22 | ...51,168,185,202 
+  ImportModal.tsx  |   85.49 |    74.55 |   82.35 |   86.93 | ...87-389,507,609 
+  ...ilesModal.tsx |   92.15 |       90 |   86.95 |   93.33 | 148,190,237       
+  ...viewModal.tsx |   91.11 |    79.41 |   89.47 |   97.05 | 121               
+  ...ingsModal.tsx |   95.45 |    63.93 |   91.66 |   95.34 | 232-233           
+  index.ts         |     100 |      100 |     100 |     100 |                   
+ applet/src/data   |     100 |      100 |     100 |     100 |                   
+  ...Portfolios.ts |     100 |      100 |     100 |     100 |                   
+ applet/src/lib    |   85.57 |    86.84 |   85.71 |   85.56 |                   
+  firebase.ts      |   85.57 |    86.84 |   85.71 |   85.56 | ...88,203,212,222 
+ applet/src/utils  |   89.75 |    81.46 |   93.33 |   91.84 |                   
+  ...ySuggester.ts |     100 |      100 |     100 |     100 |                   
+  currency.ts      |    75.3 |    58.06 |     100 |   82.35 | ...10-111,143-156 
+  excelParser.ts   |   91.11 |    86.66 |   86.95 |   92.12 | ...37,291,477-478 
+  formatters.ts    |    92.3 |      100 |     100 |    92.3 | 44                
+  ...oryService.ts |     100 |    83.33 |     100 |     100 | 81-86             
+  itemHelpers.ts   |   96.07 |    79.54 |     100 |   97.77 | 96                
+-------------------|---------|----------|---------|---------|-------------------
