@@ -60,6 +60,7 @@ export default function App() {
       if (isVaultEnabled()) {
         setVaultPin(null);
         setIsVaultLocked(true);
+        setPortfolios([DEFAULT_PORTFOLIO]);
       }
     },
     !isVaultLocked
@@ -642,7 +643,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-emerald-500 selection:text-slate-950 transition-colors">
       {(isVaultLocked || isVaultSetupMode) && (
-        <VaultLockScreen isSetup={isVaultSetupMode} onUnlock={handleUnlock} />
+        <VaultLockScreen isSetup={isVaultSetupMode} onUnlock={handleUnlock} onCancel={() => setIsVaultSetupMode(false)} />
       )}
       <div className={`transition-all duration-500 ${(isVaultLocked || isVaultSetupMode) ? 'blur-md opacity-40 pointer-events-none' : ''}`}>
       
@@ -657,7 +658,7 @@ export default function App() {
         onOpenImportModal={() => setIsImportModalOpen(true)}
         onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
-        onLockVault={() => { if(isVaultEnabled()) { setVaultPin(null); setIsVaultLocked(true); } else { setIsVaultSetupMode(true); } }}
+        onLockVault={() => { if(isVaultEnabled()) { setVaultPin(null); setIsVaultLocked(true); setPortfolios([DEFAULT_PORTFOLIO]); } else { setIsVaultSetupMode(true); } }}
         isVaultEnabled={isVaultEnabled()}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         currency={currency}

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Lock, AlertCircle } from 'lucide-react';
+import { Lock, AlertCircle, X } from 'lucide-react';
 import { verifyPin, setupVault, removeVault } from '../lib/secureStorage';
 
 interface VaultLockScreenProps {
   isSetup: boolean;
   onUnlock: (pin: string) => void;
+  onCancel?: () => void;
 }
 
-export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ isSetup, onUnlock }) => {
+export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ isSetup, onUnlock, onCancel }) => {
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
@@ -46,7 +47,15 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ isSetup, onUnl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl">
-      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-md w-full">
+      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-md w-full relative">
+        {isSetup && onCancel && (
+          <button 
+            onClick={onCancel}
+            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
         <div className="flex justify-center mb-6">
           <div className="p-4 bg-emerald-500/10 rounded-full">
             <Lock className="w-10 h-10 text-emerald-500" />
