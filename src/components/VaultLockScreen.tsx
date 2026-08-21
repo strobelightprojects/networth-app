@@ -70,6 +70,15 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ isSetup, onUnl
             : 'Enter your PIN to decrypt your local data.'}
         </p>
 
+        {isSetup && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-3 text-amber-500 text-sm text-left">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <p>
+              <strong>Important:</strong> Your PIN is used for true offline encryption. If you forget it, your local data cannot be recovered without cloud synchronization.
+            </p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
