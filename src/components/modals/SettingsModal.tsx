@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Download, Printer, Sliders, FileSpreadsheet, Bot, Cpu, Tag } from 'lucide-react';
+import { X, Save, Download, Printer, Sliders, FileSpreadsheet, Bot, Cpu, Tag, FolderKanban } from 'lucide-react';
 import { CategoryManager } from './CategoryManager';
 
 interface SettingsModalProps {
@@ -8,6 +8,7 @@ interface SettingsModalProps {
   onExportCSV?: (startDate?: string, endDate?: string) => void;
   onPrint?: (startDate?: string, endDate?: string) => void;
   onPreviewReport?: () => void;
+  onOpenManageFilesModal?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -16,6 +17,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportCSV,
   onPrint,
   onPreviewReport,
+  onOpenManageFilesModal,
 }) => {
   const [provider, setProvider] = useState<'gemini' | 'openai' | 'deepseek' | 'groq' | 'ollama' | 'custom'>('gemini');
   const [apiKey, setApiKey] = useState('');
@@ -75,6 +77,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto">
           
+          {/* Portfolio & File Management */}
+          {onOpenManageFilesModal && (
+            <>
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                  <FolderKanban className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                  Portfolio & File Management
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenManageFilesModal();
+                  }}
+                  className="w-full p-3 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 rounded-xl text-left transition-all flex items-center justify-between group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                      <FolderKanban className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
+                        Manage & Delete Portfolio Files
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        Create, rename, switch, or permanently delete portfolio files
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Open &rarr;</span>
+                </button>
+              </div>
+              <hr className="border-slate-200 dark:border-slate-800" />
+            </>
+          )}
+
           {/* Category Management */}
           <div className="space-y-4">
             <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">

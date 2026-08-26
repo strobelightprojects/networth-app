@@ -7,10 +7,9 @@ import {
   Check, 
   X, 
   ArrowUpDown, 
-  Building, 
+  Building,
   TrendingUp, 
   CreditCard,
-  Building2,
   Globe,
   Calendar,
   Shield,
@@ -44,8 +43,21 @@ interface AssetsLiabilitiesLedgerProps {
   onOpenAddItemModal: () => void;
 }
 
-
-
+const getItemHealthWarning = (item: FinancialItem) => {
+  if (item.value === 0) return { type: 'error' as const, message: 'Value is 0' };
+  if (!item.category || item.category === 'Uncategorized') return { type: 'warning' as const, message: 'Missing Category' };
+  if (item.lastUpdated) {
+    const updatedTime = new Date(item.lastUpdated).getTime();
+    if (!isNaN(updatedTime)) {
+      const nowTime = Date.now();
+      const diffDays = Math.ceil(Math.abs(nowTime - updatedTime) / (1000 * 60 * 60 * 24)); 
+      if (diffDays > 30) return { type: 'warning' as const, message: `Stale (${diffDays}d)` };
+    }
+  } else {
+    return { type: 'warning' as const, message: 'Missing Date' };
+  }
+  return null;
+};
 
 export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = ({
   items,
@@ -71,21 +83,6 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   const [showNetWorthBreakdown, setShowNetWorthBreakdown] = useState<boolean>(false);
   const [breakdownView, setBreakdownView] = useState<'accounts' | 'categories'>('accounts');
   const [showDataHealth, setShowDataHealth] = useState<boolean>(false);
-
-  const getItemHealthWarning = (item: FinancialItem) => {
-    if (item.value === 0) return { type: 'error', message: 'Value is 0' };
-    if (!item.category || item.category === 'Uncategorized') return { type: 'warning', message: 'Missing Category' };
-    if (item.lastUpdated) {
-      const updated = new Date(item.lastUpdated);
-      const now = new Date();
-      const diffTime = Math.abs(now.getTime() - updated.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-      if (diffDays > 30) return { type: 'warning', message: `Stale (${diffDays}d)` };
-    } else {
-      return { type: 'warning', message: 'Missing Date' };
-    }
-    return null;
-  };
 
   // All active account entries (most recent per account name/type)
   const allActiveItems = useMemo(() => getMostRecentItems(items, true), [items]);
@@ -1154,14 +1151,6 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
             >
               <X className="w-3 h-3" />
               <span>Clear</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsConfirmBulkDeleteOpen(true)}
-              className="px-3 py-1.5 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-500 text-white shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Selected ({selectedIds.size})</span>
             </button>
           </div>
         </div>

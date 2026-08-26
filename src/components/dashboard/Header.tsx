@@ -5,41 +5,36 @@ import {
   FileSpreadsheet, 
   FolderKanban, 
   PlusCircle,
-  Trash2,
-  FolderCog,
   Settings,
   Cloud,
   UserCheck,
   Menu,
-  X
+  X,
+  Lock,
+  GitMerge
 } from 'lucide-react';
-import { CurrencyCode, PortfolioData } from '../../types';
+import { PortfolioData } from '../../types';
 
 interface HeaderProps {
-  portfolio: PortfolioData;
   portfoliosList: PortfolioData[];
   selectedPortfolioId: string;
   onSelectPortfolio: (id: string) => void;
   onOpenManageFilesModal: () => void;
-  onDeleteCurrentPortfolio: () => void;
   onOpenImportModal: () => void;
   onOpenAddItemModal: () => void;
   onOpenSettingsModal: () => void;
   onOpenAuthModal: () => void;
-  currency: CurrencyCode;
-  onChangeCurrency: (c: CurrencyCode) => void;
   currentUser: User | null;
   onLockVault?: () => void;
   isVaultEnabled?: boolean;
+  onOpenMergeModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  portfolio,
   portfoliosList,
   selectedPortfolioId,
   onSelectPortfolio,
   onOpenManageFilesModal,
-  onDeleteCurrentPortfolio,
   onOpenImportModal,
   onOpenAddItemModal,
   onOpenSettingsModal,
@@ -47,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onLockVault,
   isVaultEnabled,
+  onOpenMergeModal,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -68,43 +64,53 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               
               {/* Portfolio Selector Dropdown & File Management */}
-              <div className="flex items-center gap-1 mt-0.5 min-w-0">
+              <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
                 <FolderKanban className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <select
+                  id="header-portfolio-select"
                   value={selectedPortfolioId}
-                  onChange={(e) => onSelectPortfolio(e.target.value)}
-                  className="bg-transparent text-xs text-slate-600 dark:text-slate-300 font-medium hover:text-slate-900 dark:hover:text-white focus:outline-none cursor-pointer max-w-[110px] sm:max-w-[200px] truncate py-0.5"
+                  onChange={(e) => {
+                    if (e.target.value === '__manage__') {
+                      onOpenManageFilesModal();
+                    } else if (e.target.value === '__merge__') {
+                      if (onOpenMergeModal) onOpenMergeModal();
+                    } else {
+                      onSelectPortfolio(e.target.value);
+                    }
+                  }}
+                  className="bg-transparent text-xs text-slate-600 dark:text-slate-300 font-medium hover:text-slate-900 dark:hover:text-white focus:outline-none cursor-pointer max-w-[110px] sm:max-w-[170px] truncate py-0.5"
                 >
                   {portfoliosList.map((p) => (
                     <option key={p.id} value={p.id} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
                       {p.name}
                     </option>
                   ))}
+                  {onOpenMergeModal && (
+                    <option value="__merge__" className="bg-slate-100 dark:bg-slate-700 text-sky-600 dark:text-sky-400 font-semibold">
+                      🔀 Merge Portfolios...
+                    </option>
+                  )}
+                  <option value="__manage__" className="bg-slate-100 dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    ⚙️ Manage Portfolios...
+                  </option>
                 </select>
-
-                {/* Manage Files Button */}
-                <button
-                  onClick={onOpenManageFilesModal}
-                  className="p-1 text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer"
-                  title="Manage & Remove Portfolio Files"
-                >
-                  <FolderCog className="w-3.5 h-3.5" />
-                </button>
-
-                {/* Delete Active File Button */}
-                <button
-                  onClick={onDeleteCurrentPortfolio}
-                  className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded transition-colors cursor-pointer"
-                  title={`Remove file "${portfolio.name}"`}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
               </div>
             </div>
           </div>
 
           {/* Desktop Right Controls */}
           <div className="hidden sm:flex items-center gap-2 sm:gap-3">
+            {onOpenMergeModal && (
+              <button
+                onClick={onOpenMergeModal}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 dark:bg-sky-900/40 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 text-xs font-semibold rounded-lg shadow-sm transition-all active:scale-95 cursor-pointer"
+                title="Merge Portfolios"
+              >
+                <GitMerge className="w-4 h-4" />
+                <span>Merge</span>
+              </button>
+            )}
+
             {/* Import Spreadsheet Button */}
             <button
               onClick={onOpenImportModal}
@@ -161,7 +167,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
                 title={isVaultEnabled ? "Lock Vault" : "Setup Local Encryption Vault"}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <Lock className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -232,7 +238,32 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Secondary Navigation List */}
             <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-2 space-y-1 border border-slate-200/60 dark:border-slate-800">
+              {onOpenMergeModal && (
+                <button
+                  id="mobile-merge-portfolios-btn"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenMergeModal();
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
+                >
+                  <GitMerge className="w-4 h-4 text-sky-500" />
+                  <span>Merge Portfolios</span>
+                </button>
+              )}
               <button
+                id="mobile-manage-files-btn"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenManageFilesModal();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
+              >
+                <FolderKanban className="w-4 h-4 text-slate-500" />
+                <span>Manage Portfolios</span>
+              </button>
+              <button
+                id="mobile-settings-btn"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   onOpenSettingsModal();

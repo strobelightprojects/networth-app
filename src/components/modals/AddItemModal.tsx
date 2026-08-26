@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { PlusCircle, X, Check, Wallet, CreditCard, Shield, RefreshCw, ArrowRightLeft, Globe, Sparkles, Zap } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { PlusCircle, X, Check, Wallet, CreditCard, Shield, ArrowRightLeft, Sparkles } from 'lucide-react';
 import { FinancialItem, AssetCategory, LiabilityCategory, InsuranceCategory, ItemType, CurrencyCode } from '../../types';
 import { CURRENCY_LIST, fetchLiveExchangeRates, convertCurrencyAmount, getCurrencySymbol } from '../../utils/currency';
 import { suggestCategoryFromAccountName } from '../../utils/aiCategorySuggester';
@@ -14,9 +14,6 @@ interface AddItemModalProps {
   onAddItem: (item: FinancialItem) => void;
 }
 
-
-
-
 export const AddItemModal: React.FC<AddItemModalProps> = ({
   isOpen,
   baseCurrency = 'USD',
@@ -28,10 +25,6 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   const liabilityCategories = useCustomCategories('liability') as LiabilityCategory[];
   const insuranceCategories = useCustomCategories('insurance') as InsuranceCategory[];
 
-  const ASSET_CATEGORIES = assetCategories;
-  const LIABILITY_CATEGORIES = liabilityCategories;
-  const INSURANCE_CATEGORIES = insuranceCategories;
-
   const [type, setType] = useState<ItemType>('asset');
   const [name, setName] = useState<string>('');
   const [category, setCategory] = useState<string>('Stocks & ETFs');
@@ -41,8 +34,8 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   const [itemDate, setItemDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Compute custom categories from existing items
-  const customCategories = React.useMemo(() => {
-    const defaultCats = new Set([...ASSET_CATEGORIES, ...LIABILITY_CATEGORIES, ...INSURANCE_CATEGORIES]);
+  const customCategories = useMemo(() => {
+    const defaultCats = new Set([...assetCategories, ...liabilityCategories, ...insuranceCategories]);
     const custom = new Set<string>();
     existingItems.forEach((item) => {
       if (!defaultCats.has(item.category)) {
@@ -50,7 +43,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       }
     });
     return Array.from(custom).sort();
-  }, [existingItems, ASSET_CATEGORIES, LIABILITY_CATEGORIES, INSURANCE_CATEGORIES]);
+  }, [existingItems, assetCategories, liabilityCategories, insuranceCategories]);
 
   // AI Category Suggestion state
   const [aiSuggestion, setAiSuggestion] = useState<ReturnType<typeof suggestCategoryFromAccountName>>(null);
@@ -184,7 +177,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               type="button"
               onClick={() => {
                 setType('asset');
-                setCategory(ASSET_CATEGORIES[0]);
+                setCategory(assetCategories[0]);
                 setUserManuallySetCategory(true);
               }}
               className={`py-2 rounded-lg flex items-center justify-center gap-1 transition-colors text-[11px] ${
@@ -200,7 +193,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               type="button"
               onClick={() => {
                 setType('liability');
-                setCategory(LIABILITY_CATEGORIES[0]);
+                setCategory(liabilityCategories[0]);
                 setUserManuallySetCategory(true);
               }}
               className={`py-2 rounded-lg flex items-center justify-center gap-1 transition-colors text-[11px] ${
@@ -216,7 +209,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               type="button"
               onClick={() => {
                 setType('insurance');
-                setCategory(INSURANCE_CATEGORIES[0]);
+                setCategory(insuranceCategories[0]);
                 setUserManuallySetCategory(true);
               }}
               className={`py-2 rounded-lg flex items-center justify-center gap-1 transition-colors text-[11px] ${
@@ -321,11 +314,11 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                   } else {
                     setIsCustomCategory(false);
                     setCategory(val);
-                    if (INSURANCE_CATEGORIES.includes(val as InsuranceCategory)) {
+                    if (insuranceCategories.includes(val as InsuranceCategory)) {
                       setType('insurance');
-                    } else if (ASSET_CATEGORIES.includes(val as AssetCategory)) {
+                    } else if (assetCategories.includes(val as AssetCategory)) {
                       setType('asset');
-                    } else if (LIABILITY_CATEGORIES.includes(val as LiabilityCategory)) {
+                    } else if (liabilityCategories.includes(val as LiabilityCategory)) {
                       setType('liability');
                     }
                   }
@@ -333,21 +326,21 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                 className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500 font-medium cursor-pointer"
               >
                 <optgroup label="Assets" className="bg-slate-900 text-slate-400 font-bold">
-                  {ASSET_CATEGORIES.map((c) => (
+                  {assetCategories.map((c) => (
                     <option key={c} value={c} className="bg-slate-900 text-white font-normal">
                       {c}
                     </option>
                   ))}
                 </optgroup>
                 <optgroup label="Liabilities & Debts" className="bg-slate-900 text-slate-400 font-bold">
-                  {LIABILITY_CATEGORIES.map((c) => (
+                  {liabilityCategories.map((c) => (
                     <option key={c} value={c} className="bg-slate-900 text-white font-normal">
                       {c}
                     </option>
                   ))}
                 </optgroup>
                 <optgroup label="Insurance Policies (Death Benefits)" className="bg-slate-900 text-slate-400 font-bold">
-                  {INSURANCE_CATEGORIES.map((c) => (
+                  {insuranceCategories.map((c) => (
                     <option key={c} value={c} className="bg-slate-900 text-white font-normal">
                       {c}
                     </option>

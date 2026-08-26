@@ -1,3 +1,0 @@
-sed -i "s/color: CATEGORY_COLORS\[name\] || '#3B82F6',/color: CATEGORY_COLORS[name] || \`hsl(\${Math.abs(name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0)) % 360}, 70%, 50%)\`,/" src/components/charts/AllocationChart.tsx
-sed -i "s/color: CATEGORY_COLORS\[name\] || '#EF4444',/color: CATEGORY_COLORS[name] || \`hsl(\${Math.abs(name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0)) % 360}, 70%, 50%)\`,/" src/components/charts/AllocationChart.tsx
-sed -i "s/color: CATEGORY_COLORS\[name\] || '#A855F7',/color: CATEGORY_COLORS[name] || \`hsl(\${Math.abs(name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0)) % 360}, 70%, 50%)\`,/" src/components/charts/AllocationChart.tsx

@@ -116,8 +116,8 @@ describe('App', () => {
 
   it('can open manage files', async () => {
     render(<App />);
-    const switchBtn = screen.getByTitle('Manage & Remove Portfolio Files');
-    fireEvent.click(switchBtn);
+    const select = screen.getAllByRole('combobox')[0];
+    fireEvent.change(select, { target: { value: '__manage__' } });
     expect(screen.getByText('Manage Portfolio Files')).toBeDefined();
   });
 
@@ -140,27 +140,5 @@ describe('App', () => {
     fireEvent.click(generateReportBtns[0]);
     
     expect(screen.getAllByText('Net Worth & Personal Financial Audit Report').length).toBeGreaterThan(0);
-  });
-
-  it('can click manage files from header select area', async () => {
-    render(<App />);
-    
-    const manageBtn = screen.getByTitle('Manage & Remove Portfolio Files');
-    if (manageBtn) {
-      fireEvent.click(manageBtn);
-      expect(screen.getByText('Manage Portfolio Files')).toBeDefined();
-    }
-  });
-
-  it('can delete current portfolio', async () => {
-    render(<App />);
-    
-    const delBtn = screen.getByTitle(/Remove file/i);
-    fireEvent.click(delBtn);
-    
-    // Default portfolio deleted, should fallback to empty default
-    await waitFor(() => {
-      expect(screen.getByText('Net Worth Tracker')).toBeDefined();
-    });
   });
 });

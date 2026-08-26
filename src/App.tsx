@@ -11,6 +11,7 @@ import {
   ColumnMapperModal, 
   AddItemModal, 
   ManageFilesModal, 
+  MergePortfoliosModal,
   SettingsModal, 
   AuthModal, 
   ReportPreviewModal,
@@ -211,6 +212,7 @@ export default function App() {
   const [mapperImportOptions, setMapperImportOptions] = useState<ImportOptions | undefined>(undefined);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState<boolean>(false);
   const [isManageFilesOpen, setIsManageFilesOpen] = useState<boolean>(false);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState<boolean>(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isReportPreviewOpen, setIsReportPreviewOpen] = useState<boolean>(false);
 
@@ -300,6 +302,30 @@ export default function App() {
     };
     setPortfolios((prev) => [...prev, newP]);
     setSelectedPortfolioId(newP.id);
+  };
+
+  const handleConfirmMerge = async (
+    mergedPortfolio: PortfolioData,
+    deletedPortfolioIds: string[],
+    updatedPortfolios: PortfolioData[]
+  ) => {
+    setPortfolios(updatedPortfolios);
+    setSelectedPortfolioId(mergedPortfolio.id);
+
+    if (currentUser) {
+      for (const delId of deletedPortfolioIds) {
+        try {
+          await deleteUserPortfolioFromFirestore(currentUser.uid, delId);
+        } catch (e) {
+          console.warn('Failed to delete merged source portfolio from Firestore', e);
+        }
+      }
+      try {
+        await saveUserPortfolioToFirestore(currentUser.uid, mergedPortfolio);
+      } catch (e) {
+        console.warn('Failed to save merged portfolio to Firestore', e);
+      }
+    }
   };
 
   // Active Portfolio Object
@@ -649,20 +675,17 @@ export default function App() {
       
       {/* Top Header */}
       <Header
-        portfolio={currentPortfolio}
         portfoliosList={portfolios}
         selectedPortfolioId={selectedPortfolioId}
         onSelectPortfolio={(id) => setSelectedPortfolioId(id)}
         onOpenManageFilesModal={() => setIsManageFilesOpen(true)}
-        onDeleteCurrentPortfolio={() => handleDeletePortfolio(currentPortfolio.id)}
+        onOpenMergeModal={() => setIsMergeModalOpen(true)}
         onOpenImportModal={() => setIsImportModalOpen(true)}
         onOpenAddItemModal={() => setIsAddItemModalOpen(true)}
         onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
         onLockVault={() => { if(isVaultEnabled()) { setVaultPin(null); setIsVaultLocked(true); setPortfolios([DEFAULT_PORTFOLIO]); } else { setIsVaultSetupMode(true); } }}
         isVaultEnabled={isVaultEnabled()}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        currency={currency}
-        onChangeCurrency={(c) => setCurrency(c)}
         currentUser={currentUser}
       />
 
@@ -782,6 +805,17 @@ export default function App() {
         onRenamePortfolio={handleRenamePortfolio}
         onCreatePortfolio={handleCreatePortfolio}
         onOpenImportModal={() => setIsImportModalOpen(true)}
+        onOpenMergeModal={() => setIsMergeModalOpen(true)}
+      />
+
+      <MergePortfoliosModal
+        isOpen={isMergeModalOpen}
+        portfolios={portfolios}
+        selectedPortfolioId={selectedPortfolioId}
+        onClose={() => setIsMergeModalOpen(false)}
+        onConfirmMerge={handleConfirmMerge}
+        onCreatePortfolio={handleCreatePortfolio}
+        onOpenImportModal={() => setIsImportModalOpen(true)}
       />
 
       <SettingsModal
@@ -790,6 +824,7 @@ export default function App() {
         onExportCSV={handleExportCSV}
         onPrint={handlePrint}
         onPreviewReport={() => setIsReportPreviewOpen(true)}
+        onOpenManageFilesModal={() => setIsManageFilesOpen(true)}
       />
 
       <ReportPreviewModal

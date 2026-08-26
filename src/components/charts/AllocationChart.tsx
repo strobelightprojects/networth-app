@@ -115,7 +115,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
         .sort((a, b) => b.value - a.value);
     }
     return [];
-  }, [portfolio, viewMode, activeItems]);
+  }, [viewMode, activeItems]);
 
   const totalSum = useMemo(() => data.reduce((a, b) => a + b.value, 0), [data]);
 

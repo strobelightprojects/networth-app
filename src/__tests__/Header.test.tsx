@@ -21,12 +21,10 @@ describe('Header', () => {
   it('renders Header with portfolio name and currency selector', () => {
     render(
       <Header
-        portfolio={mockPortfolio}
         portfoliosList={mockPortfolioList}
         selectedPortfolioId="1"
         onSelectPortfolio={vi.fn()}
         onOpenManageFilesModal={vi.fn()}
-        onDeleteCurrentPortfolio={vi.fn()}
         onOpenImportModal={vi.fn()}
         onOpenGuideModal={vi.fn()}
         onOpenAddItemModal={vi.fn()}
@@ -34,8 +32,6 @@ describe('Header', () => {
         onOpenAuthModal={vi.fn()}
         onExportCSV={vi.fn()}
         onPrint={vi.fn()}
-        currency="USD"
-        onChangeCurrency={vi.fn()}
         currentUser={null}
         theme="light"
         onToggleTheme={vi.fn()}
@@ -53,17 +49,14 @@ describe('Header', () => {
     const onToggleTheme = vi.fn();
     const onSelectPortfolio = vi.fn();
     const onOpenManageFilesModal = vi.fn();
-    const onDeleteCurrentPortfolio = vi.fn();
     const onOpenAuthModal = vi.fn();
 
     render(
       <Header
-        portfolio={mockPortfolio}
         portfoliosList={mockPortfolioList}
         selectedPortfolioId="1"
         onSelectPortfolio={onSelectPortfolio}
         onOpenManageFilesModal={onOpenManageFilesModal}
-        onDeleteCurrentPortfolio={onDeleteCurrentPortfolio}
         onOpenImportModal={onOpenImportModal}
         onOpenGuideModal={vi.fn()}
         onOpenAddItemModal={onOpenAddItemModal}
@@ -71,8 +64,6 @@ describe('Header', () => {
         onOpenAuthModal={onOpenAuthModal}
         onExportCSV={vi.fn()}
         onPrint={vi.fn()}
-        currency="USD"
-        onChangeCurrency={vi.fn()}
         currentUser={null}
         theme="dark"
         onToggleTheme={onToggleTheme}
@@ -99,20 +90,14 @@ describe('Header', () => {
     fireEvent.click(signInBtn);
     expect(onOpenAuthModal).toHaveBeenCalled();
 
-    // Manage Files Button
-    const manageFilesBtn = screen.getByTitle('Manage & Remove Portfolio Files');
-    fireEvent.click(manageFilesBtn);
-    expect(onOpenManageFilesModal).toHaveBeenCalled();
-    
-    // Delete File Button
-    const deleteBtn = screen.getByTitle('Remove file "Primary Household Portfolio"');
-    fireEvent.click(deleteBtn);
-    expect(onDeleteCurrentPortfolio).toHaveBeenCalled();
-    
-    // Select dropdown
+    // Select dropdown to change portfolio
     const select = screen.getByRole('combobox');
     fireEvent.change(select, { target: { value: '2' } });
     expect(onSelectPortfolio).toHaveBeenCalledWith('2');
+
+    // Select dropdown to open manage files
+    fireEvent.change(select, { target: { value: '__manage__' } });
+    expect(onOpenManageFilesModal).toHaveBeenCalled();
   });
   
   it('toggles mobile menu and handles mobile actions', () => {
@@ -123,12 +108,10 @@ describe('Header', () => {
 
     render(
       <Header
-        portfolio={mockPortfolio}
         portfoliosList={mockPortfolioList}
         selectedPortfolioId="1"
         onSelectPortfolio={vi.fn()}
         onOpenManageFilesModal={vi.fn()}
-        onDeleteCurrentPortfolio={vi.fn()}
         onOpenImportModal={onOpenImportModal}
         onOpenGuideModal={vi.fn()}
         onOpenAddItemModal={onOpenAddItemModal}
@@ -136,8 +119,6 @@ describe('Header', () => {
         onOpenAuthModal={onOpenAuthModal}
         onExportCSV={vi.fn()}
         onPrint={vi.fn()}
-        currency="USD"
-        onChangeCurrency={vi.fn()}
         currentUser={{ email: 'test@example.com' } as any}
         theme="light"
       />

@@ -8,8 +8,8 @@ import {
   Plus, 
   FileSpreadsheet, 
   AlertTriangle, 
-  Layers, 
-  CheckCircle2 
+  CheckCircle2,
+  GitMerge
 } from 'lucide-react';
 import { PortfolioData } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
@@ -24,6 +24,7 @@ interface ManageFilesModalProps {
   onRenamePortfolio: (id: string, newName: string) => void;
   onCreatePortfolio: (name: string) => void;
   onOpenImportModal: () => void;
+  onOpenMergeModal?: () => void;
 }
 
 export const ManageFilesModal: React.FC<ManageFilesModalProps> = ({
@@ -36,6 +37,7 @@ export const ManageFilesModal: React.FC<ManageFilesModalProps> = ({
   onRenamePortfolio,
   onCreatePortfolio,
   onOpenImportModal,
+  onOpenMergeModal,
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
@@ -103,6 +105,18 @@ export const ManageFilesModal: React.FC<ManageFilesModalProps> = ({
               Files / Portfolios ({portfolios.length})
             </span>
             <div className="flex items-center gap-2">
+              {portfolios.length >= 2 && onOpenMergeModal && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenMergeModal();
+                  }}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1 transition-colors"
+                  title="Merge multiple portfolios into one"
+                >
+                  <GitMerge className="w-3.5 h-3.5" /> Merge Files
+                </button>
+              )}
               <button
                 onClick={() => setIsCreating(true)}
                 className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1 transition-colors"
@@ -285,7 +299,20 @@ export const ManageFilesModal: React.FC<ManageFilesModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+        <div className="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between">
+          <div>
+            {portfolios.length >= 2 && onOpenMergeModal && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenMergeModal();
+                }}
+                className="px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 font-semibold text-xs rounded-xl border border-sky-500/20 flex items-center gap-1.5 transition-colors"
+              >
+                <GitMerge className="w-4 h-4" /> Merge Portfolios
+              </button>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl transition-colors"

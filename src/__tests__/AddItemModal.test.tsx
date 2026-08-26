@@ -243,5 +243,22 @@ describe('AddItemModal', () => {
       expect((dateInput as HTMLInputElement).value).toBe('2023-01-01');
     }
   });
+
+  it('does not submit when required fields are missing', () => {
+    const onAddItem = vi.fn();
+    render(
+      <AddItemModal
+        isOpen={true}
+        baseCurrency="USD"
+        onClose={vi.fn()}
+        onAddItem={onAddItem}
+      />
+    );
+
+    const submitBtn = screen.getByText('Save Account');
+    fireEvent.click(submitBtn);
+
+    expect(onAddItem).not.toHaveBeenCalled();
+  });
 });
 

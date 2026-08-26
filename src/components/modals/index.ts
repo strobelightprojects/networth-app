@@ -3,5 +3,6 @@ export * from './AuthModal';
 export * from './ColumnMapperModal';
 export * from './ImportModal';
 export * from './ManageFilesModal';
+export * from './MergePortfoliosModal';
 export * from './ReportPreviewModal';
 export * from './SettingsModal';

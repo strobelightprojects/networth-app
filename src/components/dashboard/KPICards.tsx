@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Wallet, ShieldCheck, CreditCard, Shield, TrendingUp, TrendingDown, HeartHandshake } from 'lucide-react';
 import { PortfolioData, CurrencyCode } from '../../types';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
@@ -10,38 +10,61 @@ interface KPICardsProps {
 }
 
 export const KPICards: React.FC<KPICardsProps> = ({ portfolio, currency }) => {
-  // Calculate Totals using most recent items per account
-  const activeItems = getMostRecentItems(portfolio.items);
+  // Calculate active items and KPI statistics with useMemo
+  const {
+    netWorth,
+    totalAssets,
+    totalLiabilities,
+    totalInsuranceCoverage,
+    assetCount,
+    liabilityCount,
+    insuranceCount,
+    avgAssetVal,
+    momChangePct,
+    momChangeAmount,
+    leverageRatio,
+  } = useMemo(() => {
+    const activeItems = getMostRecentItems(portfolio.items);
 
-  const totalAssets = activeItems
-    .filter((item) => item.type === 'asset')
-    .reduce((sum, item) => sum + item.value, 0);
+    const assets = activeItems.filter((item) => item.type === 'asset');
+    const liabilities = activeItems.filter((item) => item.type === 'liability');
+    const insurance = activeItems.filter((item) => item.type === 'insurance');
 
-  const totalLiabilities = activeItems
-    .filter((item) => item.type === 'liability')
-    .reduce((sum, item) => sum + item.value, 0);
+    const totAssets = assets.reduce((sum, item) => sum + item.value, 0);
+    const totLiabilities = liabilities.reduce((sum, item) => sum + item.value, 0);
+    const totInsurance = insurance.reduce((sum, item) => sum + item.value, 0);
+    const nw = totAssets - totLiabilities;
 
-  const insuranceItems = activeItems.filter((item) => item.type === 'insurance');
-  const totalInsuranceCoverage = insuranceItems.reduce((sum, item) => sum + item.value, 0);
-  const insuranceCount = insuranceItems.length;
+    const aCount = assets.length;
+    const lCount = liabilities.length;
+    const iCount = insurance.length;
+    const avgAsset = aCount > 0 ? totAssets / aCount : 0;
 
-  const netWorth = totalAssets - totalLiabilities;
+    let changePct = 0;
+    let changeAmount = 0;
+    if (portfolio.history && portfolio.history.length >= 2) {
+      const latest = portfolio.history[portfolio.history.length - 1];
+      const prev = portfolio.history[portfolio.history.length - 2];
+      changeAmount = latest.netWorth - prev.netWorth;
+      changePct = prev.netWorth !== 0 ? (changeAmount / Math.abs(prev.netWorth)) * 100 : 0;
+    }
 
-  const assetCount = activeItems.filter(i => i.type === 'asset').length;
-  const liabilityCount = activeItems.filter(i => i.type === 'liability').length;
-  const avgAssetVal = assetCount > 0 ? totalAssets / assetCount : 0;
+    const levRatio = totAssets > 0 ? (totLiabilities / totAssets) * 100 : 0;
 
-  // Month over month calculation
-  let momChangePct = 0;
-  let momChangeAmount = 0;
-  if (portfolio.history.length >= 2) {
-    const latest = portfolio.history[portfolio.history.length - 1];
-    const prev = portfolio.history[portfolio.history.length - 2];
-    momChangeAmount = latest.netWorth - prev.netWorth;
-    momChangePct = prev.netWorth > 0 ? (momChangeAmount / prev.netWorth) * 100 : 0;
-  }
-
-  const leverageRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
+    return {
+      netWorth: nw,
+      totalAssets: totAssets,
+      totalLiabilities: totLiabilities,
+      totalInsuranceCoverage: totInsurance,
+      assetCount: aCount,
+      liabilityCount: lCount,
+      insuranceCount: iCount,
+      avgAssetVal: avgAsset,
+      momChangePct: changePct,
+      momChangeAmount: changeAmount,
+      leverageRatio: levRatio,
+    };
+  }, [portfolio]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">

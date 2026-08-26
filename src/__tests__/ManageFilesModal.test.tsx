@@ -143,4 +143,26 @@ describe('ManageFilesModal component', () => {
     
     expect(screen.getByText('Primary Family Portfolio')).toBeDefined();
   });
+
+  it('triggers import modal from manage files', () => {
+    const handleOpenImport = vi.fn();
+    render(
+      <ManageFilesModal
+        isOpen={true}
+        portfolios={mockPortfolios}
+        selectedPortfolioId="p1"
+        onClose={vi.fn()}
+        onSelectPortfolio={vi.fn()}
+        onDeletePortfolio={vi.fn()}
+        onRenamePortfolio={vi.fn()}
+        onCreatePortfolio={vi.fn()}
+        onOpenImportModal={handleOpenImport}
+      />
+    );
+
+    const importBtn = screen.getByText('Import Sheet');
+    fireEvent.click(importBtn);
+
+    expect(handleOpenImport).toHaveBeenCalled();
+  });
 });

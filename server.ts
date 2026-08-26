@@ -1,6 +1,5 @@
 import express from 'express';
 import path from 'path';
-import { createServer as createViteServer } from 'vite';
 import helmet from 'helmet';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -594,16 +593,24 @@ Return a JSON object containing a "suggestions" array with one object per input 
 
   // Serve Vite in dev, static files in production
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    import('fs').then((fs) => {
+      const distFromCwd = path.join(process.cwd(), 'dist');
+      const distPath = fs.existsSync(path.join(distFromCwd, 'index.html'))
+        ? distFromCwd
+        : fs.existsSync(path.join(__dirname, 'index.html'))
+          ? __dirname
+          : distFromCwd;
+      app.use(express.static(distPath));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
     });
   }
 

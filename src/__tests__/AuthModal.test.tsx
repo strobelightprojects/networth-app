@@ -3,6 +3,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthModal } from '../components/modals/AuthModal';
 
+// Mock lib/firebase
+vi.mock('../lib/firebase', () => ({
+  signInWithGoogle: vi.fn(),
+  signInGuest: vi.fn(),
+  logoutUser: vi.fn(),
+  deleteUserAccountAndData: vi.fn(),
+  auth: {}
+}));
+
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(() => ({})),
   signInWithEmailAndPassword: vi.fn(),
@@ -15,6 +24,7 @@ vi.mock('firebase/auth', () => ({
 
 describe('AuthModal component', () => {
   const onClose = vi.fn();
+  const onSyncLocalDataToCloud = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -78,20 +88,67 @@ describe('AuthModal component', () => {
     });
   });
 
-  it('handles sign out correctly when user is logged in', async () => {
-    const auth = await import('firebase/auth');
-    const mockSignOut = vi.fn().mockResolvedValueOnce(undefined);
-    (auth as any).signOut = mockSignOut;
+  it('calls handleGoogleSignIn when Google button is clicked', async () => {
+    const { signInWithGoogle } = await import('../lib/firebase');
+    (signInWithGoogle as any).mockResolvedValueOnce({});
 
-    const mockUser = { uid: '123', email: 'test@example.com' } as any;
+    render(<AuthModal isOpen={true} onClose={onClose} currentUser={null} onSyncLocalDataToCloud={onSyncLocalDataToCloud} isSyncing={false} />);
+    
+    const googleBtn = screen.getByText('Sign in with Google');
+    fireEvent.click(googleBtn);
+    
+    await waitFor(() => {
+      expect(signInWithGoogle).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
 
-    render(<AuthModal isOpen={true} onClose={onClose} currentUser={mockUser} onSyncLocalDataToCloud={vi.fn()} isSyncing={false} />);
+  it('calls handleGuestSignIn when Guest button is clicked', async () => {
+    const { signInGuest } = await import('../lib/firebase');
+    (signInGuest as any).mockResolvedValueOnce({});
+
+    render(<AuthModal isOpen={true} onClose={onClose} currentUser={null} onSyncLocalDataToCloud={onSyncLocalDataToCloud} isSyncing={false} />);
     
-    // UI should show "Signed In" state
-    expect(screen.getByText('User Account & Security')).toBeDefined();
+    const guestBtn = screen.getByText('Continue as Guest (Anonymous Cloud Session)');
+    fireEvent.click(guestBtn);
     
-    const signOutBtn = screen.getByRole('button', { name: /Sign Out/i });
+    await waitFor(() => {
+      expect(signInGuest).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it('calls handleLogout when Sign Out button is clicked', async () => {
+    const { logoutUser } = await import('../lib/firebase');
+    (logoutUser as any).mockResolvedValueOnce({});
+
+    render(<AuthModal isOpen={true} onClose={onClose} currentUser={{ uid: 'user1', email: 'test@test.com' } as any} onSyncLocalDataToCloud={onSyncLocalDataToCloud} isSyncing={false} />);
+    
+    const signOutBtn = screen.getByText('Sign Out');
     fireEvent.click(signOutBtn);
+    
+    await waitFor(() => {
+      expect(logoutUser).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it('calls handleDeleteAccount after confirmation', async () => {
+    const { deleteUserAccountAndData } = await import('../lib/firebase');
+    (deleteUserAccountAndData as any).mockResolvedValueOnce({});
+
+    render(<AuthModal isOpen={true} onClose={onClose} currentUser={{ uid: 'user1', email: 'test@test.com' } as any} onSyncLocalDataToCloud={onSyncLocalDataToCloud} isSyncing={false} />);
+    
+    const initDeleteBtn = screen.getByText('Delete Account & Purge Stored Data');
+    fireEvent.click(initDeleteBtn);
+    
+    const confirmDeleteBtn = screen.getByText('Yes, Delete Everything');
+    fireEvent.click(confirmDeleteBtn);
+    
+    await waitFor(() => {
+      expect(deleteUserAccountAndData).toHaveBeenCalledWith({ uid: 'user1', email: 'test@test.com' });
+      expect(onClose).toHaveBeenCalled();
+    });
   });
 
   it('calls onSyncLocalDataToCloud if requested', async () => {
