@@ -14,7 +14,7 @@ if (getApps().length === 0) {
   });
 }
 
-const MAX_REQUESTS_PER_HOUR = 30;
+const MAX_REQUESTS_PER_HOUR = 5;
 
 // Distributed rate limiting per verified user UID via Firestore
 async function checkRateLimit(uid: string): Promise<{ allowed: boolean; waitMinutes: number }> {
