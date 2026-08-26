@@ -78,7 +78,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
           name,
           value,
           percentage: total > 0 ? (value / total) * 100 : 0,
-          color: CATEGORY_COLORS[name] || '#3B82F6',
+          color: CATEGORY_COLORS[name] || `hsl(${Math.abs(name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0)) % 360}, 70%, 50%)`,
         }))
         .sort((a, b) => b.value - a.value);
     } else if (viewMode === 'liabilityType') {
@@ -94,7 +94,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
           name,
           value,
           percentage: total > 0 ? (value / total) * 100 : 0,
-          color: CATEGORY_COLORS[name] || '#EF4444',
+          color: CATEGORY_COLORS[name] || `hsl(${Math.abs(name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0)) % 360}, 70%, 50%)`,
         }))
         .sort((a, b) => b.value - a.value);
     } else if (viewMode === 'insuranceType') {
@@ -110,7 +110,7 @@ export const AllocationChart: React.FC<AllocationChartProps> = ({ portfolio, cur
           name,
           value,
           percentage: total > 0 ? (value / total) * 100 : 0,
-          color: CATEGORY_COLORS[name] || '#A855F7',
+          color: CATEGORY_COLORS[name] || `hsl(${Math.abs(name.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0)) % 360}, 70%, 50%)`,
         }))
         .sort((a, b) => b.value - a.value);
     }

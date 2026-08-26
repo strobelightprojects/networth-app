@@ -43,9 +43,20 @@ describe('SettingsModal', () => {
     );
 
     const dateInputs = screen.getAllByDisplayValue('');
-    // Input 0: Start Date, Input 1: End Date
-    fireEvent.change(dateInputs[0], { target: { value: '2026-01-01' } });
-    fireEvent.change(dateInputs[1], { target: { value: '2026-08-01' } });
+    // By adding the category manager, there are now more inputs with empty display values initially.
+    // However, since type="date" isn't fully supported across all jsdom environments, querying by display value for date fields is brittle.
+    // Querying by label text instead is more robust.
+    
+    // The labels in the component are: "Start Date (Optional)" and "End Date (Optional)"
+    const startDateLabel = screen.getByText('Start Date (Optional)');
+    const endDateLabel = screen.getByText('End Date (Optional)');
+    
+    // The inputs are the next sibling element after the label
+    const startDateInput = startDateLabel.nextElementSibling as HTMLInputElement;
+    const endDateInput = endDateLabel.nextElementSibling as HTMLInputElement;
+
+    fireEvent.change(startDateInput, { target: { value: '2026-01-01' } });
+    fireEvent.change(endDateInput, { target: { value: '2026-08-01' } });
 
     const exportBtn = screen.getByText('Download CSV');
     fireEvent.click(exportBtn);

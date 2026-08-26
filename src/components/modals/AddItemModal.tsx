@@ -4,6 +4,7 @@ import { FinancialItem, AssetCategory, LiabilityCategory, InsuranceCategory, Ite
 import { CURRENCY_LIST, fetchLiveExchangeRates, convertCurrencyAmount, getCurrencySymbol } from '../../utils/currency';
 import { suggestCategoryFromAccountName } from '../../utils/aiCategorySuggester';
 import { suggestCategoriesWithGemini } from '../../utils/geminiCategoryService';
+import { useCustomCategories } from '../../utils/categoryManager';
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -13,35 +14,8 @@ interface AddItemModalProps {
   onAddItem: (item: FinancialItem) => void;
 }
 
-const ASSET_CATEGORIES: AssetCategory[] = [
-  'Stocks & ETFs',
-  'Real Estate',
-  'Retirement (401k/IRA)',
-  'Cash & Equivalents',
-  'Crypto',
-  'Precious Metals',
-  'Bonds & Fixed Income',
-  'Alternative & Private',
-  'Vehicle & Physical',
-];
 
-const LIABILITY_CATEGORIES: LiabilityCategory[] = [
-  'Mortgage',
-  'Credit Cards',
-  'Student Loans',
-  'Auto Loans',
-  'Personal Loans',
-  'Other Liabilities',
-];
 
-const INSURANCE_CATEGORIES: InsuranceCategory[] = [
-  'Term Life Insurance',
-  'Whole Life Insurance',
-  'Universal Life Insurance',
-  'Disability Insurance',
-  'Health & Long-Term Care',
-  'Property & Umbrella',
-];
 
 export const AddItemModal: React.FC<AddItemModalProps> = ({
   isOpen,
@@ -50,6 +24,14 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   onClose,
   onAddItem,
 }) => {
+  const assetCategories = useCustomCategories('asset') as AssetCategory[];
+  const liabilityCategories = useCustomCategories('liability') as LiabilityCategory[];
+  const insuranceCategories = useCustomCategories('insurance') as InsuranceCategory[];
+
+  const ASSET_CATEGORIES = assetCategories;
+  const LIABILITY_CATEGORIES = liabilityCategories;
+  const INSURANCE_CATEGORIES = insuranceCategories;
+
   const [type, setType] = useState<ItemType>('asset');
   const [name, setName] = useState<string>('');
   const [category, setCategory] = useState<string>('Stocks & ETFs');
@@ -68,7 +50,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       }
     });
     return Array.from(custom).sort();
-  }, [existingItems]);
+  }, [existingItems, ASSET_CATEGORIES, LIABILITY_CATEGORIES, INSURANCE_CATEGORIES]);
 
   // AI Category Suggestion state
   const [aiSuggestion, setAiSuggestion] = useState<ReturnType<typeof suggestCategoryFromAccountName>>(null);

@@ -33,6 +33,7 @@ import { formatCurrency } from '../../utils/formatters';
 import { getCurrencySymbol } from '../../utils/currency';
 import { getMostRecentItems } from '../../utils/itemHelpers';
 import { suggestCategoryFromAccountName } from '../../utils/aiCategorySuggester';
+import { useCustomCategories } from '../../utils/categoryManager';
 
 interface AssetsLiabilitiesLedgerProps {
   items: FinancialItem[];
@@ -43,35 +44,8 @@ interface AssetsLiabilitiesLedgerProps {
   onOpenAddItemModal: () => void;
 }
 
-const ALL_ASSET_CATEGORIES: AssetCategory[] = [
-  'Stocks & ETFs',
-  'Real Estate',
-  'Retirement (401k/IRA)',
-  'Cash & Equivalents',
-  'Crypto',
-  'Precious Metals',
-  'Bonds & Fixed Income',
-  'Alternative & Private',
-  'Vehicle & Physical',
-];
 
-const ALL_LIABILITY_CATEGORIES: LiabilityCategory[] = [
-  'Mortgage',
-  'Credit Cards',
-  'Student Loans',
-  'Auto Loans',
-  'Personal Loans',
-  'Other Liabilities',
-];
 
-const ALL_INSURANCE_CATEGORIES: InsuranceCategory[] = [
-  'Term Life Insurance',
-  'Whole Life Insurance',
-  'Universal Life Insurance',
-  'Disability Insurance',
-  'Health & Long-Term Care',
-  'Property & Umbrella',
-];
 
 export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = ({
   items,
@@ -81,6 +55,14 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
   onDeleteMultipleItems,
   onOpenAddItemModal,
 }) => {
+  const assetCategories = useCustomCategories('asset') as AssetCategory[];
+  const liabilityCategories = useCustomCategories('liability') as LiabilityCategory[];
+  const insuranceCategories = useCustomCategories('insurance') as InsuranceCategory[];
+
+  const ALL_ASSET_CATEGORIES = assetCategories;
+  const ALL_LIABILITY_CATEGORIES = liabilityCategories;
+  const ALL_INSURANCE_CATEGORIES = insuranceCategories;
+
   const [typeFilter, setTypeFilter] = useState<'active' | 'all' | 'asset' | 'liability' | 'insurance' | 'excluded'>('active');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -205,7 +187,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
     ALL_LIABILITY_CATEGORIES.forEach((c) => set.add(c));
     ALL_INSURANCE_CATEGORIES.forEach((c) => set.add(c));
     return Array.from(set).sort();
-  }, [items]);
+  }, [items, ALL_ASSET_CATEGORIES, ALL_LIABILITY_CATEGORIES, ALL_INSURANCE_CATEGORIES]);
 
   // Filtered & sorted items across all ledger records
   const processedItems = useMemo(() => {
@@ -264,7 +246,7 @@ export const AssetsLiabilitiesLedger: React.FC<AssetsLiabilitiesLedgerProps> = (
       }
     });
     return Array.from(custom).sort();
-  }, [items]);
+  }, [items, ALL_ASSET_CATEGORIES, ALL_LIABILITY_CATEGORIES, ALL_INSURANCE_CATEGORIES]);
 
   const [isEditCustomCategory, setIsEditCustomCategory] = useState<boolean>(false);
 

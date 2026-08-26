@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Download, Printer, Sliders, FileSpreadsheet, Bot, Cpu } from 'lucide-react';
+import { X, Save, Download, Printer, Sliders, FileSpreadsheet, Bot, Cpu, Tag } from 'lucide-react';
+import { CategoryManager } from './CategoryManager';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -74,6 +75,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto">
           
+          {/* Category Management */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <Tag className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+              Category Management
+            </h4>
+            <CategoryManager />
+          </div>
+          <hr className="border-slate-200 dark:border-slate-800" />
+
           {/* Quick Actions / Export & Print Section */}
           <div className="space-y-3">
             <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">

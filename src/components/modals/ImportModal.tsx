@@ -177,6 +177,20 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         const parsedData = await parseSingleFile(file);
         const detectedSheetDate = detectGlobalDateFromSheet(parsedData.rows, file.name) || extractDateFromFilename(file.name, importDate);
 
+        // Enhance mapping for batch
+        if (parsedData.headers.length > 0) {
+          if (!parsedData.suggestedMapping) {
+            parsedData.suggestedMapping = { nameCol: '', valueCol: '' };
+          }
+          const lowerHeaders = parsedData.headers.map(h => h.toLowerCase().trim());
+          const exactAccountIdx = lowerHeaders.findIndex(h => h === 'account' || h === 'account name');
+          if (exactAccountIdx !== -1) parsedData.suggestedMapping.nameCol = parsedData.headers[exactAccountIdx];
+          const exactAmountIdx = lowerHeaders.findIndex(h => h === 'amount' || h === 'value' || h === 'balance');
+          if (exactAmountIdx !== -1) parsedData.suggestedMapping.valueCol = parsedData.headers[exactAmountIdx];
+          const exactDateIdx = lowerHeaders.findIndex(h => h === 'date');
+          if (exactDateIdx !== -1) parsedData.suggestedMapping.dateCol = parsedData.headers[exactDateIdx];
+        }
+
         let items: FinancialItem[] = [];
         if (parsedData.suggestedMapping?.nameCol && parsedData.suggestedMapping?.valueCol) {
           items = convertRowsToItems(parsedData.rows, parsedData.suggestedMapping, undefined, undefined, detectedSheetDate);
@@ -250,6 +264,23 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   // Helper after sheet is parsed locally
   const handleParsedSheet = (parsedData: ParsedSheetData) => {
     const detectedSheetDate = detectGlobalDateFromSheet(parsedData.rows, parsedData.fileName) || importDate;
+
+    // Enhance and enforce auto-detection for common CSV header structures
+    if (parsedData.headers.length > 0) {
+      if (!parsedData.suggestedMapping) {
+        parsedData.suggestedMapping = { nameCol: '', valueCol: '' };
+      }
+      const lowerHeaders = parsedData.headers.map(h => h.toLowerCase().trim());
+      
+      const exactAccountIdx = lowerHeaders.findIndex(h => h === 'account' || h === 'account name');
+      if (exactAccountIdx !== -1) parsedData.suggestedMapping.nameCol = parsedData.headers[exactAccountIdx];
+      
+      const exactAmountIdx = lowerHeaders.findIndex(h => h === 'amount' || h === 'value' || h === 'balance');
+      if (exactAmountIdx !== -1) parsedData.suggestedMapping.valueCol = parsedData.headers[exactAmountIdx];
+      
+      const exactDateIdx = lowerHeaders.findIndex(h => h === 'date');
+      if (exactDateIdx !== -1) parsedData.suggestedMapping.dateCol = parsedData.headers[exactDateIdx];
+    }
 
     // Check if mapping looks valid
     if (parsedData.suggestedMapping?.nameCol && parsedData.suggestedMapping?.valueCol) {

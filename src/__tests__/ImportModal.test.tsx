@@ -171,7 +171,7 @@ describe('ImportModal', () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     await waitFor(() => {
-      expect(handleOpenColumnMapper).toHaveBeenCalledWith(mockParsedData, expect.anything());
+      expect(handleOpenColumnMapper).toHaveBeenCalledWith(expect.objectContaining({fileName: 'unknown.csv'}), expect.anything());
       expect(handleClose).toHaveBeenCalled();
     });
   });
